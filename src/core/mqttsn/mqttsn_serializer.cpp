@@ -139,6 +139,7 @@ otError GwInfoMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength
     if (addressLength > 0)
     {
         SuccessOrExit(addressString.Set("%.*s", static_cast<int32_t>(addressLength), address));
+        SuccessOrExit(error = mAddress.FromString(addressString.AsCString()));
         mHasAddress = true;
     }
     else
@@ -146,7 +147,7 @@ otError GwInfoMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength
         mHasAddress = false;
     }
 
-    SuccessOrExit(error = mAddress.FromString(addressString.AsCString()));
+    
 
 exit:
     return error;
