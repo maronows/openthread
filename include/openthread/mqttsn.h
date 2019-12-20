@@ -32,6 +32,10 @@
 #include <openthread/instance.h>
 #include <openthread/ip6.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OT_DEFAULT_MQTTSN_PORT 1883
 
 #ifndef OPENTHREAD_CONFIG_MQTTSN_ENABLE
@@ -711,5 +715,9 @@ otError otMqttsnDisconnectTypeToString(otMqttsnDisconnectType aDisconnectType, c
  *
  */
 otError otMqttsnAddressTypeToString(const otIp6Address* aAddress, const char** aAddressString);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* OPENTHREAD_MQTTSN_H_ */
