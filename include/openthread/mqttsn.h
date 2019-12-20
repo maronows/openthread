@@ -42,7 +42,7 @@
  * MQTT-SN message return code.
  *
  */
-typedef enum otMqttsnReturnCode
+typedef enum
 {
     kCodeAccepted = 0,
     kCodeRejectedCongestion = 1,
@@ -58,7 +58,7 @@ typedef enum otMqttsnReturnCode
  * MQTT-SN quality of service level.
  *
  */
-typedef enum otMqttsnQos
+typedef enum
 {
     kQos0 = 0x0,
     kQos1 = 0x1,
@@ -70,7 +70,7 @@ typedef enum otMqttsnQos
  * Client lifecycle states.
  *
  */
-typedef enum otMqttsnClientState
+typedef enum
 {
     /**
      * Client is not connected to gateway.
@@ -97,7 +97,7 @@ typedef enum otMqttsnClientState
 /**
  * MQTT-SN topic identificator type.
  */
-typedef enum otMqttsnTopicIdType
+typedef enum
 {
     /**
      * Predefined topic ID.
@@ -120,7 +120,7 @@ typedef enum otMqttsnTopicIdType
  * Disconnected state reason.
  *
  */
-typedef enum otMqttsnDisconnectType
+typedef enum
 {
     /**
      * Client was disconnected by gateway/broker.
