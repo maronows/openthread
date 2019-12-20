@@ -42,7 +42,7 @@
  * MQTT-SN message return code.
  *
  */
-enum otMqttsnReturnCode
+typedef enum otMqttsnReturnCode
 {
     kCodeAccepted = 0,
     kCodeRejectedCongestion = 1,
@@ -52,25 +52,25 @@ enum otMqttsnReturnCode
      * Pending message timed out. this value is not returned by gateway.
      */
     kCodeTimeout = -1,
-};
+} otMqttsnReturnCode;
 
 /**
  * MQTT-SN quality of service level.
  *
  */
-enum otMqttsnQos
+typedef enum otMqttsnQos
 {
     kQos0 = 0x0,
     kQos1 = 0x1,
     kQos2 = 0x2,
     kQosm1 = 0x3
-};
+} otMqttsnQos;
 
 /**
  * Client lifecycle states.
  *
  */
-enum otMqttsnClientState
+typedef enum otMqttsnClientState
 {
     /**
      * Client is not connected to gateway.
@@ -92,12 +92,12 @@ enum otMqttsnClientState
      * Client connection is lost due to communication error.
      */
     kStateLost,
-};
+} otMqttsnClientState;
 
 /**
  * MQTT-SN topic identificator type.
  */
-enum otMqttsnTopicIdType
+typedef enum otMqttsnTopicIdType
 {
     /**
      * Predefined topic ID.
@@ -114,13 +114,13 @@ enum otMqttsnTopicIdType
      *
      */
     kTopicName
-};
+} otMqttsnTopicIdType;
 
 /**
  * Disconnected state reason.
  *
  */
-enum otMqttsnDisconnectType
+typedef enum otMqttsnDisconnectType
 {
     /**
      * Client was disconnected by gateway/broker.
@@ -138,7 +138,7 @@ enum otMqttsnDisconnectType
      * Communication timeout.
      */
     kDisconnectTimeout
-};
+} otMqttsnDisconnectType;
 
 /**
  * Topic ID type.
