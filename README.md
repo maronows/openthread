@@ -211,4 +211,4 @@ See more information about `publish` command in [CLI reference](src/cli/README_M
 
 ## Code samples
 
-You can find code samples how to use MQTT-SN client with OpenThread in separate repository [here](https://github.com/kyberpunk/openthread-mqttsn/)
+You can find code samples how to use MQTT-SN client with OpenThread in separate repository [here](https://github.com/kyberpunk/openthread-mqttsn/).
