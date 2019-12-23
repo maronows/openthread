@@ -277,8 +277,8 @@ otError Mqtt::ProcessSearchgw(int argc, char *argv[])
     SuccessOrExit(error = otIp6AddressFromString(argv[1], &multicastAddress));
     SuccessOrExit(error = mInterpreter.ParseLong(argv[2], port));
     SuccessOrExit(error = mInterpreter.ParseLong(argv[3], radius));
-    SuccessOrExit(error = otMqttsnSearchGateway(mInterpreter.mInstance, &multicastAddress, (uint16_t)port, (uint8_t)radius));
     SuccessOrExit(error = otMqttsnSetSearchgwHandler(mInterpreter.mInstance, &Mqtt::HandleSearchgwResponse, this));
+    SuccessOrExit(error = otMqttsnSearchGateway(mInterpreter.mInstance, &multicastAddress, (uint16_t)port, (uint8_t)radius));
 exit:
     return error;
 }
@@ -417,6 +417,10 @@ void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGateway
     if (otMqttsnAddressTypeToString(aAddress, &addressString) == OT_ERROR_NONE)
     {
         mInterpreter.mServer->OutputFormat("searchgw response from gateway id %u with address: %s\r\n", (unsigned int)aGatewayId, addressString);
+    }
+    else
+    {
+        mInterpreter.mServer->OutputFormat("searchgw response with invalid source address\r\n");
     }
 }
 
