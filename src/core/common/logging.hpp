@@ -1869,6 +1869,30 @@ extern "C" {
 #endif
 
 /**
+ * @def otDumpDebgMqttsn
+ *
+ * This method generates a memory dump with log level debug and region memory.
+ *
+ * @param[in]  aId          A pointer to a NULL-terminated string that is printed before the bytes.
+ * @param[in]  aBuf         A pointer to the buffer.
+ * @param[in]  aLength      Number of bytes to print.
+ *
+ */
+#if OPENTHREAD_CONFIG_LOG_MQTTSN == 1
+#define otDumpCritMqttsn(aId, aBuf, aLength) otDumpCrit(OT_LOG_REGION_MQTTSN, aId, aBuf, aLength)
+#define otDumpWarnMqttsn(aId, aBuf, aLength) otDumpWarn(OT_LOG_REGION_MQTTSN, aId, aBuf, aLength)
+#define otDumpNoteMqttsn(aId, aBuf, aLength) otDumpNote(OT_LOG_REGION_MQTTSN, aId, aBuf, aLength)
+#define otDumpInfoMqttsn(aId, aBuf, aLength) otDumpInfo(OT_LOG_REGION_MQTTSN, aId, aBuf, aLength)
+#define otDumpDebgMqttsn(aId, aBuf, aLength) otDumpDebg(OT_LOG_REGION_MQTTSN, aId, aBuf, aLength)
+#else
+#define otDumpCritMqttsn(aId, aBuf, aLength)
+#define otDumpWarnMqttsn(aId, aBuf, aLength)
+#define otDumpNoteMqttsn(aId, aBuf, aLength)
+#define otDumpInfoMqttsn(aId, aBuf, aLength)
+#define otDumpDebgMqttsn(aId, aBuf, aLength)
+#endif
+
+/**
  * @def otDumpCert
  *
  * This method generates a memory dump with log level none for the certification test.

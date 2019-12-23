@@ -298,7 +298,7 @@ void MqttsnClient::HandleUdpReceive(void *aContext, otMessage *aMessage, const o
     message.Read(offset, length, data);
 
     otLogDebgMqttsn("UDP message received:");
-    otDumpDebgCore("received", data, length);
+    otDumpDebgMqttsn("received", data, length);
 
     // Determine message type
     MessageType messageType;
