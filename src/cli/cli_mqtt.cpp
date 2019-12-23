@@ -92,12 +92,21 @@ otError Mqtt::ProcessHelp(int argc, char *argv[])
 
 otError Mqtt::ProcessStart(int argc, char *argv[])
 {
-    otError error;
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
+    otError error;
+    long port = OT_DEFAULT_MQTTSN_PORT;
+    if (argc > 2)
+    {
+        ExitNow(error = OT_ERROR_INVALID_ARGS);
+    }
+    if (argc == 2)
+    {
+        SuccessOrExit(error = mInterpreter.ParseLong(argv[1], port));
+    }
 
     SuccessOrExit(error = otMqttsnSetPublishReceivedHandler(mInterpreter.mInstance, &Mqtt::HandlePublishReceived, this));
-    SuccessOrExit(error = otMqttsnStart(mInterpreter.mInstance, OT_DEFAULT_MQTTSN_PORT));
+    SuccessOrExit(error = otMqttsnStart(mInterpreter.mInstance, (uint16_t)port));
 exit:
     return error;
 }
