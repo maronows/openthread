@@ -30,9 +30,11 @@ Done
 
 ### start
 
-Usage: `mqtt start`
+Usage: `mqtt start [port]`
 
 Start the MQTT-SN client. Must be called before performing other operations.
+
+* port: UDP port number used by MQTT-SN client. Default value is 10000 (optional).
 
 ```bash
 > mqtt start
