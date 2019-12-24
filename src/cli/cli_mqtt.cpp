@@ -423,14 +423,9 @@ void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGateway
 void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGatewayId)
 {
     const char *addressString;
-    if (otMqttsnAddressTypeToString(aAddress, &addressString) == OT_ERROR_NONE)
-    {
-        mInterpreter.mServer->OutputFormat("searchgw response from %s: gateway_id=%u\r\n", addressString, (unsigned int)aGatewayId);
-    }
-    else
-    {
-        mInterpreter.mServer->OutputFormat("searchgw response from invalid source address\r\n");
-    }
+    mInterpreter.mServer->OutputFormat("searchgw response from ");
+    mInterpreter.OutputIp6Address(*static_cast<const Ip6::Address *>(aAddress));
+    mInterpreter.mServer->OutputFormat(": gateway_id=%u\r\n", addressString, (unsigned int) aGatewayId);
 }
 
 void Mqtt::PrintFailedWithCode(const char *aCommandName, otMqttsnReturnCode aCode)
