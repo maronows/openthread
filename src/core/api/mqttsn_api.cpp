@@ -326,12 +326,5 @@ otError otMqttsnDisconnectTypeToString(otMqttsnDisconnectType aDisconnectType, c
     return OT_ERROR_NONE;
 }
 
-otError otMqttsnAddressTypeToString(const otIp6Address* aAddress, const char** aAddressString)
-{
-    const Ip6::Address &address = *static_cast<const Ip6::Address *>(aAddress);
-    *aAddressString = address.ToString().AsCString();
-    return OT_ERROR_NONE;
-}
-
 #endif
 

@@ -704,18 +704,6 @@ otError otMqttsnClientStateToString(otMqttsnClientState aClientState, const char
  */
 otError otMqttsnDisconnectTypeToString(otMqttsnDisconnectType aDisconnectType, const char** aDisconnectTypeString);
 
-/**
- * Get string value of given Ip6 address.
- *
- * @param[in]  aAddress        Ip6 address.
- * @param[out] aAddressString  A pointer to string pointer which will contain Ip6 address string value.
- *
- * @retval OT_ERROR_NONE              String value was obtained.
- * @retval OT_ERROR_INVALID_ARGS      Invalid Ip6 address value.
- *
- */
-otError otMqttsnAddressTypeToString(const otIp6Address* aAddress, const char** aAddressString);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif
