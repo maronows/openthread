@@ -422,7 +422,6 @@ void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGateway
 
 void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGatewayId)
 {
-    const char *addressString;
     mInterpreter.mServer->OutputFormat("searchgw response from ");
     mInterpreter.OutputIp6Address(*static_cast<const Ip6::Address *>(aAddress));
     mInterpreter.mServer->OutputFormat(": gateway_id=%u\r\n", (unsigned int)aGatewayId);
