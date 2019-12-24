@@ -196,5 +196,5 @@ Send searchgw multicast message. If there is any MQTT-SN gateway listening in th
 ```bash
 > mqtt searchgw ff03::1 10000 5
 Done
-searchgw response from gateway id 1 with address: 2018:ff9b:0:0:0:0:ac12:8
+searchgw response from 2018:ff9b:0:0:0:0:ac12:8: gateway_id=1
 ```

@@ -425,11 +425,11 @@ void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGateway
     const char *addressString;
     if (otMqttsnAddressTypeToString(aAddress, &addressString) == OT_ERROR_NONE)
     {
-        mInterpreter.mServer->OutputFormat("searchgw response from gateway id %u with address: %s\r\n", (unsigned int)aGatewayId, addressString);
+        mInterpreter.mServer->OutputFormat("searchgw response from %s: gateway_id=%u\r\n", addressString, (unsigned int)aGatewayId);
     }
     else
     {
-        mInterpreter.mServer->OutputFormat("searchgw response with invalid source address\r\n");
+        mInterpreter.mServer->OutputFormat("searchgw response from invalid source address\r\n");
     }
 }
 
