@@ -88,6 +88,11 @@ protected:
         ;
     }
 
+    virtual ~MessageBase()
+    {
+        ;
+    }
+
 public:
     MessageType GetMessageType() { return mMessageType; };
 
@@ -106,13 +111,15 @@ private:
 class AdvertiseMessage : public MessageBase
 {
 public:
-    AdvertiseMessage()
+    AdvertiseMessage(void)
         : MessageBase(kTypeAdvertise)
+        , mGatewayId()
+        , mDuration()
     {
         ;
     }
 
-    AdvertiseMessage (uint8_t aGatewayId, uint16_t aDuration)
+    AdvertiseMessage(uint8_t aGatewayId, uint16_t aDuration)
         : MessageBase(kTypeAdvertise)
         , mGatewayId(aGatewayId)
         , mDuration(aDuration)
@@ -140,8 +147,9 @@ private:
 class SearchGwMessage : public MessageBase
 {
 public:
-    SearchGwMessage()
+    SearchGwMessage(void)
         : MessageBase(kTypeSearchGw)
+        , mRadius()
     {
         ;
     }
@@ -168,8 +176,11 @@ private:
 class GwInfoMessage : public MessageBase
 {
 public:
-    GwInfoMessage()
+    GwInfoMessage(void)
         : MessageBase(kTypeGwInfo)
+        , mGatewayId()
+        , mHasAddress()
+        , mAddress()
     {
         ;
     }
@@ -208,8 +219,12 @@ private:
 class ConnectMessage : public MessageBase
 {
 public:
-    ConnectMessage()
+    ConnectMessage(void)
         : MessageBase(kTypeConnect)
+        , mCleanSessionFlag()
+        , mWillFlag()
+        , mDuration()
+        , mClientId()
     {
         ;
     }
@@ -254,8 +269,9 @@ private:
 class ConnackMessage : public MessageBase
 {
 public:
-    ConnackMessage()
+    ConnackMessage(void)
         : MessageBase(kTypeConnack)
+        , mReturnCode()
     {
         ;
     }
@@ -282,8 +298,11 @@ private:
 class RegisterMessage : public MessageBase
 {
 public:
-    RegisterMessage()
+    RegisterMessage(void)
         : MessageBase(kTypeRegister)
+        , mTopicId()
+        , mMessageId()
+        , mTopicName()
     {
         ;
     }
@@ -322,8 +341,11 @@ private:
 class RegackMessage : public MessageBase
 {
 public:
-    RegackMessage()
+    RegackMessage(void)
         : MessageBase(kTypeRegack)
+        , mReturnCode()
+        , mTopicId()
+        , mMessageId()
     {
         ;
     }
@@ -362,8 +384,17 @@ private:
 class PublishMessage : public MessageBase
 {
 public:
-    PublishMessage()
+    PublishMessage(void)
         : MessageBase(kTypePublish)
+        , mDupFlag()
+        , mRetainedFlag()
+        , mQos()
+        , mMessageId()
+        , mTopicIdType()
+        , mTopicId()
+        , mShortTopicName()
+        , mPayload()
+        , mPayloadLength()
     {
         ;
     }
@@ -438,8 +469,11 @@ private:
 class PubackMessage : public MessageBase
 {
 public:
-    PubackMessage()
+    PubackMessage(void)
         : MessageBase(kTypePuback)
+        , mReturnCode()
+        , mTopicId()
+        , mMessageId()
     {
         ;
     }
@@ -478,8 +512,9 @@ private:
 class PubcompMessage : public MessageBase
 {
 public:
-    PubcompMessage()
+    PubcompMessage(void)
         : MessageBase(kTypePubcomp)
+        , mMessageId()
     {
         ;
     }
@@ -506,8 +541,9 @@ private:
 class PubrecMessage : public MessageBase
 {
 public:
-    PubrecMessage()
+    PubrecMessage(void)
         : MessageBase(kTypePubrec)
+        , mMessageId()
     {
         ;
     }
@@ -534,8 +570,9 @@ private:
 class PubrelMessage : public MessageBase
 {
 public:
-    PubrelMessage()
+    PubrelMessage(void)
         : MessageBase(kTypePubrel)
+        , mMessageId()
     {
         ;
     }
@@ -562,8 +599,15 @@ private:
 class SubscribeMessage : public MessageBase
 {
 public:
-    SubscribeMessage()
+    SubscribeMessage(void)
         : MessageBase(kTypeSubscribe)
+        , mDupFlag()
+        , mQos()
+        , mMessageId()
+        , mTopicIdType()
+        , mTopicId()
+        , mShortTopicName()
+        , mTopicName()
     {
         ;
     }
@@ -622,16 +666,21 @@ private:
 class SubackMessage : public MessageBase
 {
 public:
-    SubackMessage()
+    SubackMessage(void)
         : MessageBase(kTypeSuback)
+        , mReturnCode()
+        , mTopicId()
+        , mQos()
+        , mMessageId()
     {
         ;
     }
 
-    SubackMessage (ReturnCode aReturnCode, TopicId aTopicId, uint16_t aMessageId)
+    SubackMessage (ReturnCode aReturnCode, TopicId aTopicId, Qos aQos, uint16_t aMessageId)
         : MessageBase(kTypeSuback)
         , mReturnCode(aReturnCode)
         , mTopicId(aTopicId)
+        , mQos(aQos)
         , mMessageId(aMessageId)
     {
         ;
@@ -667,8 +716,13 @@ private:
 class UnsubscribeMessage : public MessageBase
 {
 public:
-    UnsubscribeMessage()
+    UnsubscribeMessage(void)
         : MessageBase(kTypeUnsubscribe)
+        , mMessageId()
+        , mTopicIdType()
+        , mTopicId()
+        , mShortTopicName()
+        , mTopicName()
     {
         ;
     }
@@ -715,8 +769,9 @@ private:
 class UnsubackMessage : public MessageBase
 {
 public:
-    UnsubackMessage()
+    UnsubackMessage(void)
         : MessageBase(kTypeUnsuback)
+        , mMessageId()
     {
         ;
     }
@@ -743,8 +798,9 @@ private:
 class PingreqMessage : public MessageBase
 {
 public:
-    PingreqMessage()
+    PingreqMessage(void)
         : MessageBase(kTypePingreq)
+        , mClientId()
     {
         ;
     }
@@ -771,7 +827,7 @@ private:
 class PingrespMessage : public MessageBase
 {
 public:
-    PingrespMessage()
+    PingrespMessage(void)
         : MessageBase(kTypePingresp)
     {
         ;
@@ -785,8 +841,9 @@ public:
 class DisconnectMessage : public MessageBase
 {
 public:
-    DisconnectMessage()
+    DisconnectMessage(void)
         : MessageBase(kTypeDisconnect)
+        , mDuration()
     {
         ;
     }
