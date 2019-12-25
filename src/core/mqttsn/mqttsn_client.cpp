@@ -58,6 +58,14 @@ namespace Mqttsn {
 
 template <typename CallbackType>
 MessageMetadata<CallbackType>::MessageMetadata()
+    : mDestinationAddress()
+    , mDestinationPort()
+    , mMessageId()
+    , mTimestamp()
+    , mRetransmissionTimeout()
+    , mRetransmissionCount()
+    , mCallback()
+    , mContext()
 {
     ;
 }
