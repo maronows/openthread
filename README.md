@@ -13,6 +13,7 @@
   * [Subscribe the topic](#Subscribe-the-topic)
   * [Publish a message](#Publish-a-message)
 * [MQTT-SN source files](#MQTT-SN-source-files)
+* [Code samples](#Code-samples)
 
 ### Overview
 
@@ -207,3 +208,7 @@ See more information about `publish` command in [CLI reference](src/cli/README_M
 [src/core/api/mqttsn_api.cpp](src/core/api/mqttsn_api.cpp)<br>
 [src/cli/cli_mqtt.cpp](src/cli/cli_mqtt.cpp)<br>
 [src/cli/cli_mqtt.hpp](src/cli/cli_mqtt.hpp)
+
+## Code samples
+
+You can find code samples how to use MQTT-SN client with OpenThread in separate repository [here](https://github.com/kyberpunk/openthread-mqttsn/).

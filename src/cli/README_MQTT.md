@@ -30,9 +30,11 @@ Done
 
 ### start
 
-Usage: `mqtt start`
+Usage: `mqtt start [port]`
 
 Start the MQTT-SN client. Must be called before performing other operations.
+
+* port: UDP port number used by MQTT-SN client. Default value is 10000 (optional).
 
 ```bash
 > mqtt start
@@ -194,5 +196,5 @@ Send searchgw multicast message. If there is any MQTT-SN gateway listening in th
 ```bash
 > mqtt searchgw ff03::1 10000 5
 Done
-searchgw response from gateway id 1 with address: 2018:ff9b:0:0:0:0:ac12:8
+searchgw response from 2018:ff9b:0:0:0:0:ac12:8: gateway_id=1
 ```

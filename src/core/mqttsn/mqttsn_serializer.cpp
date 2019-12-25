@@ -112,9 +112,10 @@ otError GwInfoMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_
     int32_t length = -1;
     if (mHasAddress)
     {
-        Ip6::Address::InfoString addressString = mAddress.ToString();
-        char* address = const_cast<char*>(addressString.AsCString());
-        length = MQTTSNSerialize_gwinfo(aBuffer, aBufferLength, mGatewayId, addressString.GetLength(), reinterpret_cast<unsigned char*>(address));
+        // paho does not use const parameters even if data are not changed
+        uint8_t *addressBytes = const_cast<uint8_t *>(mAddress.mFields.m8);
+        length = MQTTSNSerialize_gwinfo(aBuffer, aBufferLength, mGatewayId,
+                OT_IP6_ADDRESS_SIZE, reinterpret_cast<unsigned char*>(addressBytes));
     }
     else
     {
@@ -133,21 +134,18 @@ otError GwInfoMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength
     otError error = OT_ERROR_NONE;
     unsigned short addressLength;
     unsigned char* address;
-    Ip6::Address::InfoString addressString;
     int32_t length = MQTTSNDeserialize_gwinfo(&mGatewayId, &addressLength, &address, const_cast<unsigned char*>(aBuffer), aBufferLength);
     VerifyOrExit(length > 0, error = OT_ERROR_FAILED);
     if (addressLength > 0)
     {
-        SuccessOrExit(addressString.Set("%.*s", static_cast<int32_t>(addressLength), address));
-        SuccessOrExit(error = mAddress.FromString(addressString.AsCString()));
+        VerifyOrExit(addressLength == OT_IP6_ADDRESS_SIZE, error = OT_ERROR_INVALID_ARGS);
+        memcpy(mAddress.mFields.m8, address, OT_IP6_ADDRESS_SIZE);
         mHasAddress = true;
     }
     else
     {
         mHasAddress = false;
     }
-
-    
 
 exit:
     return error;

@@ -32,7 +32,11 @@
 #include <openthread/instance.h>
 #include <openthread/ip6.h>
 
-#define OT_DEFAULT_MQTTSN_PORT 1883
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define OT_DEFAULT_MQTTSN_PORT 10000
 
 #ifndef OPENTHREAD_CONFIG_MQTTSN_ENABLE
 #define OPENTHREAD_CONFIG_MQTTSN_ENABLE 0
@@ -42,7 +46,7 @@
  * MQTT-SN message return code.
  *
  */
-enum otMqttsnReturnCode
+typedef enum
 {
     kCodeAccepted = 0,
     kCodeRejectedCongestion = 1,
@@ -52,25 +56,25 @@ enum otMqttsnReturnCode
      * Pending message timed out. this value is not returned by gateway.
      */
     kCodeTimeout = -1,
-};
+} otMqttsnReturnCode;
 
 /**
  * MQTT-SN quality of service level.
  *
  */
-enum otMqttsnQos
+typedef enum
 {
     kQos0 = 0x0,
     kQos1 = 0x1,
     kQos2 = 0x2,
     kQosm1 = 0x3
-};
+} otMqttsnQos;
 
 /**
  * Client lifecycle states.
  *
  */
-enum otMqttsnClientState
+typedef enum
 {
     /**
      * Client is not connected to gateway.
@@ -92,12 +96,12 @@ enum otMqttsnClientState
      * Client connection is lost due to communication error.
      */
     kStateLost,
-};
+} otMqttsnClientState;
 
 /**
  * MQTT-SN topic identificator type.
  */
-enum otMqttsnTopicIdType
+typedef enum
 {
     /**
      * Predefined topic ID.
@@ -114,13 +118,13 @@ enum otMqttsnTopicIdType
      *
      */
     kTopicName
-};
+} otMqttsnTopicIdType;
 
 /**
  * Disconnected state reason.
  *
  */
-enum otMqttsnDisconnectType
+typedef enum
 {
     /**
      * Client was disconnected by gateway/broker.
@@ -138,7 +142,7 @@ enum otMqttsnDisconnectType
      * Communication timeout.
      */
     kDisconnectTimeout
-};
+} otMqttsnDisconnectType;
 
 /**
  * Topic ID type.
@@ -700,16 +704,8 @@ otError otMqttsnClientStateToString(otMqttsnClientState aClientState, const char
  */
 otError otMqttsnDisconnectTypeToString(otMqttsnDisconnectType aDisconnectType, const char** aDisconnectTypeString);
 
-/**
- * Get string value of given Ip6 address.
- *
- * @param[in]  aAddress        Ip6 address.
- * @param[out] aAddressString  A pointer to string pointer which will contain Ip6 address string value.
- *
- * @retval OT_ERROR_NONE              String value was obtained.
- * @retval OT_ERROR_INVALID_ARGS      Invalid Ip6 address value.
- *
- */
-otError otMqttsnAddressTypeToString(const otIp6Address* aAddress, const char** aAddressString);
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif /* OPENTHREAD_MQTTSN_H_ */

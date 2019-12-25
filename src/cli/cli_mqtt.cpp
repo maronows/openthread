@@ -92,12 +92,21 @@ otError Mqtt::ProcessHelp(int argc, char *argv[])
 
 otError Mqtt::ProcessStart(int argc, char *argv[])
 {
-    otError error;
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
+    otError error;
+    long port = OT_DEFAULT_MQTTSN_PORT;
+    if (argc > 2)
+    {
+        ExitNow(error = OT_ERROR_INVALID_ARGS);
+    }
+    if (argc == 2)
+    {
+        SuccessOrExit(error = mInterpreter.ParseLong(argv[1], port));
+    }
 
     SuccessOrExit(error = otMqttsnSetPublishReceivedHandler(mInterpreter.mInstance, &Mqtt::HandlePublishReceived, this));
-    SuccessOrExit(error = otMqttsnStart(mInterpreter.mInstance, OT_DEFAULT_MQTTSN_PORT));
+    SuccessOrExit(error = otMqttsnStart(mInterpreter.mInstance, (uint16_t)port));
 exit:
     return error;
 }
@@ -277,8 +286,8 @@ otError Mqtt::ProcessSearchgw(int argc, char *argv[])
     SuccessOrExit(error = otIp6AddressFromString(argv[1], &multicastAddress));
     SuccessOrExit(error = mInterpreter.ParseLong(argv[2], port));
     SuccessOrExit(error = mInterpreter.ParseLong(argv[3], radius));
-    SuccessOrExit(error = otMqttsnSearchGateway(mInterpreter.mInstance, &multicastAddress, (uint16_t)port, (uint8_t)radius));
     SuccessOrExit(error = otMqttsnSetSearchgwHandler(mInterpreter.mInstance, &Mqtt::HandleSearchgwResponse, this));
+    SuccessOrExit(error = otMqttsnSearchGateway(mInterpreter.mInstance, &multicastAddress, (uint16_t)port, (uint8_t)radius));
 exit:
     return error;
 }
@@ -413,11 +422,9 @@ void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGateway
 
 void Mqtt::HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGatewayId)
 {
-    const char *addressString;
-    if (otMqttsnAddressTypeToString(aAddress, &addressString) == OT_ERROR_NONE)
-    {
-        mInterpreter.mServer->OutputFormat("searchgw response from gateway id %u with address: %s\r\n", (unsigned int)aGatewayId, addressString);
-    }
+    mInterpreter.mServer->OutputFormat("searchgw response from ");
+    mInterpreter.OutputIp6Address(*static_cast<const Ip6::Address *>(aAddress));
+    mInterpreter.mServer->OutputFormat(": gateway_id=%u\r\n", (unsigned int)aGatewayId);
 }
 
 void Mqtt::PrintFailedWithCode(const char *aCommandName, otMqttsnReturnCode aCode)

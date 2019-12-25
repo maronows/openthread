@@ -298,7 +298,7 @@ void MqttsnClient::HandleUdpReceive(void *aContext, otMessage *aMessage, const o
     message.Read(offset, length, data);
 
     otLogDebgMqttsn("UDP message received:");
-    otDumpDebgCore("received", data, length);
+    otDumpDebgMqttsn("received", data, length);
 
     // Determine message type
     MessageType messageType;
@@ -962,7 +962,8 @@ void MqttsnClient::DisconnectReceived(const Ip6::MessageInfo &messageInfo, const
 
 void MqttsnClient::HandleProcessTask(Tasklet &aTasklet)
 {
-    if (aTasklet.GetOwner<MqttsnClient>().Process() != OT_ERROR_NONE)
+    otError error = aTasklet.GetOwner<MqttsnClient>().Process();
+    if (error != OT_ERROR_NONE)
     {
         otLogWarnMqttsn("Process task failed: %s", otThreadErrorToString(error));
     }
