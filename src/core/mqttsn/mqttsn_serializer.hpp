@@ -93,10 +93,6 @@ public:
 
     void SetMessageType(MessageType aMessageType) { mMessageType = aMessageType; };
 
-    virtual otError Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const = 0;
-
-    virtual otError Deserialize(const uint8_t* aBuffer, int32_t aBufferLength) = 0;
-
     static otError DeserializeMessageType(const uint8_t* aBuffer, int32_t aBufferLength, MessageType* aMessageType);
 
 private:
