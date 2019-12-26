@@ -88,11 +88,6 @@ protected:
         ;
     }
 
-    virtual ~MessageBase()
-    {
-        ;
-    }
-
 public:
     MessageType GetMessageType() { return mMessageType; };
 
