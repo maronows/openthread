@@ -43,6 +43,7 @@ otError StaticArrayList<ItemType>::Add(const ItemType &aValue)
     }
     for (uint16_t i = 0; i < mMaxSize; i++)
     {
+        // Find free space in the buffer for new item
         if (mItems[i].mIsRemoved)
         {
             mItems[i] = StaticListItem<ItemType>(aValue);
@@ -61,7 +62,7 @@ otError StaticArrayList<ItemType>::Remove(StaticListItem<ItemType> *aItem)
 {
     if (mItems == NULL || IsEmpty())
     {
-        return OT_ERROR_INVALID_STATE;
+        return OT_ERROR_NOT_FOUND;
     }
     if (aItem == mHead)
     {
@@ -101,7 +102,7 @@ void StaticArrayList<ItemType>::Clear()
     mSize = 0;
 }
 
-otError ActiveGatewayList::Add(GatewayId aGatewayId, ot::Ip6::Address aGatewayAddress, uint32_t aDuration)
+otError ActiveGatewayList::Add(GatewayId aGatewayId, const ot::Ip6::Address &aGatewayAddress, uint32_t aDuration)
 {
     otError error = OT_ERROR_NONE;
     uint32_t millisNow = TimerMilli::GetNow().GetValue();
@@ -109,6 +110,7 @@ otError ActiveGatewayList::Add(GatewayId aGatewayId, ot::Ip6::Address aGatewayAd
     GatewayInfo *gatewayInfo = Find(aGatewayId);
     if (gatewayInfo != NULL)
     {
+        // If gateway exists in the list just update information
         gatewayInfo->mGatewayAddress = aGatewayAddress;
         gatewayInfo->mLastUpdatedTimestamp = millisNow;
         gatewayInfo->mDuration = aDuration;
@@ -144,6 +146,7 @@ otError ActiveGatewayList::HandleTimer()
     }
 	millisNow = TimerMilli::GetNow().GetValue();
     item = mGatewayInfoList.Head();
+    // Find all expired gateways in the list and remove them
     do
     {
         StaticListItem<GatewayInfo> *currentItem = item;

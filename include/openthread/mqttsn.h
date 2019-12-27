@@ -44,6 +44,11 @@ extern "C" {
 
 enum
 {
+    /**
+     * Maximum number of active gateways to be maintained. Static buffer is allocated
+     * for the gateway information.
+     *
+     */
     kMaxGatewayInfoCount = 5
 };
 
@@ -608,8 +613,28 @@ otError otMqttsnAwake(otInstance *aInstance, uint32_t aTimeout);
  */
 otError otMqttsnSearchGateway(otInstance *aInstance, const otIp6Address *aMulticastAddress, uint16_t aPort, uint8_t aRadius);
 
+/**
+ * Get number of active gateways. Gateways are periodically advertised or obtained
+ * with gwinfo message.
+ *
+ * @param[in]  aInstance   A pointer to an OpenThread instance.
+ *
+ * @returns  Number of active gateways cached in MQTT-SN client.
+ *
+ */
 uint16_t otMqttsnGetActiveGatewaysCount(otInstance *aInstance);
 
+/**
+ * Get informations about active gateways. Gateways are periodically advertised or obtained
+ * with gwinfo message.
+ *
+ * @param[in]  aInstance    A pointer to an OpenThread instance.
+ * @param[in]  aBuffer      A pointer to statically allocated buffer for storing gateway informations.
+ * @param[in]  aBufferSize  Maximal number of items which can be stored in the buffer.
+ *
+ * @returns  Number of active gateways written in the buffer.
+ *
+ */
 uint16_t otMqttsnGetActiveGateways(otInstance *aInstance, otMqttsnGatewayInfo *aBuffer, uint16_t aBufferSize);
 
 /**

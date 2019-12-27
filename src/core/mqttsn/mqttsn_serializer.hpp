@@ -42,7 +42,23 @@
 
 namespace ot {
 
+/**
+ * @namespace ot::Mqttsn
+ * @brief
+ *   This namespace includes definitions for MQTT-SN.
+ *
+ */
 namespace Mqttsn {
+
+/**
+ * @addtogroup core-mqttsn
+ *
+ * @brief
+ *   This module includes definitions for MQTT-SN.
+ *
+ * @{
+ *
+ */
 
 enum MessageType
 {
@@ -858,8 +874,12 @@ private:
     uint16_t mDuration;
 };
 
-}
+/**
+ * @}
+ *
+ */
 
-}
+} // namespace Mqttsn
+} // namespace ot
 
 #endif /* MQTTSN_SERIALIZER_HPP_ */

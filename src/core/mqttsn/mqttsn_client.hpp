@@ -43,7 +43,24 @@
  */
 
 namespace ot {
+
+/**
+ * @namespace ot::Mqttsn
+ * @brief
+ *   This namespace includes definitions for MQTT-SN.
+ *
+ */
 namespace Mqttsn {
+
+/**
+ * @addtogroup core-mqttsn
+ *
+ * @brief
+ *   This module includes definitions for MQTT-SN.
+ *
+ * @{
+ *
+ */
 
 /**
  * MQTT-SN message return code.
@@ -795,6 +812,12 @@ public:
      */
     ClientState GetState(void);
 
+    /**
+     * Get list of active MQTT-SN gateways. Gateways are periodically advertised
+     * or obtained with gwinfo message.
+     *
+     * @returns A reference to list with active gateways information.
+     */
     const StaticArrayList<GatewayInfo> &GetActiveGateways(void);
 
     /**
@@ -1023,7 +1046,12 @@ private:
     void* mRegisterReceivedContext;
 };
 
-}
-}
+/**
+ * @}
+ *
+ */
+
+} // namespace Mqttsn
+} // namespace ot
 
 #endif /* MQTTSN_CLIENT_HPP_ */
