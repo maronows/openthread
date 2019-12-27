@@ -159,6 +159,8 @@ private:
 template <typename ItemType>
 class StaticListItem
 {
+    friend class StaticArrayList<ItemType>;
+
 public:
     /**
      * This constructor initializes the object.
@@ -245,8 +247,6 @@ private:
     ItemType mValue;
     StaticListItem<ItemType> *mNext;
     bool mIsRemoved;
-
-    template<typename> friend class StaticArrayList;
 };
 
 /**
@@ -261,6 +261,8 @@ class ActiveGatewayList;
  */
 class GatewayInfo : public otMqttsnGatewayInfo
 {
+    friend class ActiveGatewayList;
+
 public:
     /**
      * This constructor initializes the object.
@@ -344,9 +346,9 @@ public:
 private:
     uint32_t mLastUpdatedTimestamp;
     uint32_t mDuration;
-
-    friend class ActiveGatewayList;
 };
+
+template class StaticArrayList<GatewayInfo>;
 
 /**
  * This class represents list for maintaining information about active MQTT-SN gateways.

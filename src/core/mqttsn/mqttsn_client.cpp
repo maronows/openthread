@@ -80,7 +80,11 @@ MessageMetadata<CallbackType>::MessageMetadata()
 }
 
 template <typename CallbackType>
-MessageMetadata<CallbackType>::MessageMetadata(const Ip6::Address &aDestinationAddress, uint16_t aDestinationPort, uint16_t aMessageId, uint32_t aTimestamp, uint32_t aRetransmissionTimeout, uint8_t aRetransmissionCount, CallbackType aCallback, void* aContext)
+MessageMetadata<CallbackType>::MessageMetadata(
+        const Ip6::Address &aDestinationAddress, uint16_t aDestinationPort,
+        uint16_t aMessageId, uint32_t aTimestamp,
+        uint32_t aRetransmissionTimeout, uint8_t aRetransmissionCount,
+        CallbackType aCallback, void* aContext)
     : mDestinationAddress(aDestinationAddress)
     , mDestinationPort(aDestinationPort)
     , mMessageId(aMessageId)

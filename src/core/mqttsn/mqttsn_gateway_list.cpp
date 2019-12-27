@@ -26,7 +26,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <mqttsn/mqttsn_gateway_list.hpp>
+#include "mqttsn_gateway_list.hpp"
 #include "common/timer.hpp"
 
 namespace ot {

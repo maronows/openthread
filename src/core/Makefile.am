@@ -186,9 +186,9 @@ SOURCES_COMMON                             = \
     meshcop/meshcop_tlvs.cpp                 \
     meshcop/panid_query_client.cpp           \
     meshcop/timestamp.cpp                    \
-	mqttsn/mqttsn_client.cpp                 \
-	mqttsn/mqttsn_gateway_list.cpp           \
-	mqttsn/mqttsn_serializer.cpp             \
+    mqttsn/mqttsn_client.cpp                 \
+    mqttsn/mqttsn_gateway_list.cpp           \
+    mqttsn/mqttsn_serializer.cpp             \
     net/dhcp6_client.cpp                     \
     net/dhcp6_server.cpp                     \
     net/dns_client.cpp                       \
@@ -387,9 +387,9 @@ HEADERS_COMMON                             = \
     meshcop/meshcop_tlvs.hpp                 \
     meshcop/panid_query_client.hpp           \
     meshcop/timestamp.hpp                    \
-	mqttsn/mqttsn_client.hpp                 \
-	mqttsn/mqttsn_gateway_list.hpp           \
-	mqttsn/mqttsn_serializer.hpp             \
+    mqttsn/mqttsn_client.hpp                 \
+    mqttsn/mqttsn_gateway_list.hpp           \
+    mqttsn/mqttsn_serializer.hpp             \
     net/dhcp6.hpp                            \
     net/dhcp6_client.hpp                     \
     net/dhcp6_server.hpp                     \
