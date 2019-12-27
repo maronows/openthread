@@ -241,7 +241,6 @@ PRETTY_FILES                                                        = \
     $(noinst_HEADERS)                                                 \
     $(test_address_sanitizer_SOURCES)                                 \
     $(test_aes_SOURCES)                                               \
-    $(test_mqttsn_SOURCES)                                            \
     $(test_child_SOURCES)                                             \
     $(test_child_table_SOURCES)                                       \
     $(test_hdlc_SOURCES)                                              \
@@ -252,6 +251,7 @@ PRETTY_FILES                                                        = \
     $(test_mac_frame_SOURCES)                                         \
     $(test_message_queue_SOURCES)                                     \
     $(test_message_SOURCES)                                           \
+    $(test_mqttsn_SOURCES)                                            \
     $(test_ncp_buffer_SOURCES)                                        \
     $(test_network_data_SOURCES)                                      \
     $(test_priority_queue_SOURCES)                                    \
