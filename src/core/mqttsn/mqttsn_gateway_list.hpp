@@ -85,14 +85,7 @@ public:
      * @param[in]  aItems  Maximal number of items.
      *
      */
-    StaticArrayList(StaticListItem<ItemType> *aItems, uint16_t aMaxSize)
-        : mHead(NULL)
-        , mItems(aItems)
-        , mMaxSize(aMaxSize)
-        , mSize(0)
-    {
-        Clear();
-    }
+    StaticArrayList(StaticListItem<ItemType> *aItems, uint16_t aMaxSize);
 
     /**
      * Get head item of the list.
@@ -100,7 +93,7 @@ public:
      * @returns A pointer to head item of the list. NULL is returned if list is empty.
      *
      */
-    StaticListItem<ItemType> *Head() { return mHead; }
+    StaticListItem<ItemType> *Head(void) { return mHead; }
 
     /**
      * Get head item of the list.
@@ -171,7 +164,7 @@ public:
      * This constructor initializes the object.
      *
      */
-    StaticListItem()
+    StaticListItem(void)
         : mValue()
         , mNext(NULL)
         , mIsRemoved(false)
@@ -199,7 +192,7 @@ public:
      * @returns  A reference to the value of the list item.
      *
      */
-    ItemType &Value()
+    ItemType &Value(void)
     {
         return mValue;
     }
@@ -210,7 +203,7 @@ public:
      * @returns  A reference to constant value of the list item.
      *
      */
-    const ItemType &Value() const
+    const ItemType &Value(void) const
     {
         return mValue;
     }
@@ -222,7 +215,7 @@ public:
      *           is the last one.
      *
      */
-    bool HasNext() const
+    bool HasNext(void) const
     {
         return mNext != NULL;
     }
@@ -233,7 +226,7 @@ public:
      * @returns  Returns a pointer to next item in the list or NULL if there is none.
      *
      */
-    StaticListItem<ItemType> *Next()
+    StaticListItem<ItemType> *Next(void)
     {
         return mNext;
     }
@@ -244,7 +237,7 @@ public:
      * @returns  Returns a pointer to const next item in the list or NULL if there is none.
      *
      */
-    const StaticListItem<ItemType> *Next() const
+    const StaticListItem<ItemType> *Next(void) const
     {
         return mNext;
     }
@@ -273,7 +266,7 @@ public:
      * This constructor initializes the object.
      *
      */
-    GatewayInfo()
+    GatewayInfo(void)
         : mLastUpdatedTimestamp()
         , mDuration()
     {
@@ -305,7 +298,7 @@ public:
      * @return  ID of the gateway.
      *
      */
-    GatewayId GetGatewayId() const
+    GatewayId GetGatewayId(void) const
     {
         return mGatewayId;
     }
@@ -316,7 +309,7 @@ public:
      * @return  A reference to IPv6 address of the gateway.
      *
      */
-    const ot::Ip6::Address &GetGatewayAddress() const
+    const ot::Ip6::Address &GetGatewayAddress(void) const
     {
         return *static_cast<const ot::Ip6::Address *>(&mGatewayAddress);
     }
@@ -368,7 +361,7 @@ public:
      * This constructor initializes the object.
      *
      */
-    ActiveGatewayList()
+    ActiveGatewayList(void)
         : mGatewayInfoListArray()
         , mGatewayInfoList(mGatewayInfoListArray, kMaxGatewayInfoCount)
     {

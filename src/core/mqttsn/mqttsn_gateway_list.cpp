@@ -32,6 +32,16 @@
 namespace ot {
 
 namespace Mqttsn {
+	
+template <typename ItemType>
+StaticArrayList<ItemType>::StaticArrayList(StaticListItem<ItemType> *aItems, uint16_t aMaxSize)
+    : mHead(NULL)
+    , mItems(aItems)
+    , mMaxSize(aMaxSize)
+    , mSize(0)
+{
+    Clear();
+}
 
 template <typename ItemType>
 otError StaticArrayList<ItemType>::Add(const ItemType &aValue)
@@ -87,7 +97,7 @@ otError StaticArrayList<ItemType>::Remove(StaticListItem<ItemType> *aItem)
 }
 
 template <typename ItemType>
-void StaticArrayList<ItemType>::Clear()
+void StaticArrayList<ItemType>::Clear(void)
 {
     if (mItems == NULL)
     {
@@ -125,7 +135,7 @@ exit:
     return error;
 }
 
-bool ActiveGatewayList::IsEmpty() const
+bool ActiveGatewayList::IsEmpty(void) const
 {
     return mGatewayInfoList.IsEmpty();
 }
@@ -135,7 +145,7 @@ void ActiveGatewayList::Clear()
     mGatewayInfoList.Clear();
 }
 
-otError ActiveGatewayList::HandleTimer()
+otError ActiveGatewayList::HandleTimer(void)
 {
 	otError error = OT_ERROR_NONE;
 	StaticListItem<GatewayInfo> *item = NULL;
@@ -179,7 +189,7 @@ GatewayInfo *ActiveGatewayList::Find(GatewayId aGatewayId)
     return NULL;
 }
 
-const StaticArrayList<GatewayInfo> &ActiveGatewayList::GetList()
+const StaticArrayList<GatewayInfo> &ActiveGatewayList::GetList(void)
 {
     return mGatewayInfoList;
 }
