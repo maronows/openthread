@@ -1002,6 +1002,7 @@ void MqttsnClient::DisconnectReceived(const Ip6::MessageInfo &messageInfo, const
 
 void MqttsnClient::SearchGwReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length)
 {
+#if OPENTHREAD_FTD
     SearchGwMessage searchGwMessage;
     // Do not respond to SEARCHGW messages when client not active
     if (GetState() != kStateActive)
@@ -1013,7 +1014,6 @@ void MqttsnClient::SearchGwReceived(const Ip6::MessageInfo &messageInfo, const u
         return;
     }
 
-#if OPENTHREAD_FTD
     // Respond with GWINFO message for each active gateway in cached list
     const StaticListItem<GatewayInfo> *gatewayInfoItem = GetActiveGateways().Head();
     do
@@ -1035,6 +1035,10 @@ void MqttsnClient::SearchGwReceived(const Ip6::MessageInfo &messageInfo, const u
         }
     }
     while ((gatewayInfoItem = gatewayInfoItem->Next()) != NULL);
+#else
+    OT_UNUSED_VARIABLE(messageInfo);
+    OT_UNUSED_VARIABLE(data);
+    OT_UNUSED_VARIABLE(length);
 #endif
 }
 
