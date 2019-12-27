@@ -585,6 +585,9 @@ private:
      */
     struct HelpData
     {
+        void Clear(void) { memset(this, 0, sizeof(*this)); }
+        void ClearOption(void) { memset(&mOption, 0, sizeof(mOption)); }
+
         Header       mHeader;
         otCoapOption mOption;
         uint16_t     mNextOptionOffset; ///< The byte offset for the next CoAP Option
@@ -598,7 +601,7 @@ private:
         OT_STATIC_ASSERT(sizeof(mBuffer.mHead.mInfo) + sizeof(HelpData) + kHelpDataAlignment <= sizeof(mBuffer),
                          "Insufficient buffer size for CoAP processing!");
 
-        return *static_cast<const HelpData *>(otALIGN(mBuffer.mHead.mData, kHelpDataAlignment));
+        return *static_cast<const HelpData *>(OT_ALIGN(mBuffer.mHead.mData, kHelpDataAlignment));
     }
 
     HelpData &GetHelpData(void) { return const_cast<HelpData &>(static_cast<const Message *>(this)->GetHelpData()); }

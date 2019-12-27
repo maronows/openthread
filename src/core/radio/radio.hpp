@@ -295,7 +295,7 @@ public:
      * @retval OT_ERROR_NOT_IMPLEMENTED  CCA ED threshold configuration via dBm is not implemented.
      *
      */
-    otError SetCcaEnergyDetectThreshold(int8_t &aThreshold)
+    otError SetCcaEnergyDetectThreshold(int8_t aThreshold)
     {
         return otPlatRadioSetCcaEnergyDetectThreshold(GetInstance(), aThreshold);
     }
@@ -316,6 +316,18 @@ public:
      *
      */
     void SetPromiscuous(bool aEnable) { otPlatRadioSetPromiscuous(GetInstance(), aEnable); }
+
+    /**
+     * This method returns the current state of the radio.
+     *
+     * This function is not required by OpenThread. It may be used for debugging and/or application-specific purposes.
+     *
+     * @note This function may be not implemented. In this case it always returns OT_RADIO_STATE_INVALID state.
+     *
+     * @return  Current state of the radio.
+     *
+     */
+    otRadioState GetState(void) { return otPlatRadioGetState(GetInstance()); }
 
     /**
      * This method enables the radio.

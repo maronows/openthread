@@ -315,6 +315,7 @@ HEADERS_COMMON                             = \
     common/encoding.hpp                      \
     common/extension.hpp                     \
     common/instance.hpp                      \
+    common/linked_list.hpp                   \
     common/locator.hpp                       \
     common/locator-getters.hpp               \
     common/logging.hpp                       \

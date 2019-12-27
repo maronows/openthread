@@ -44,7 +44,10 @@
 #include <openthread/platform/logging.h>
 
 #include "common/random_manager.hpp"
+#include "common/tasklet.hpp"
+#include "common/timer.hpp"
 #include "diags/factory_diags.hpp"
+#include "radio/radio.hpp"
 
 #if OPENTHREAD_RADIO || OPENTHREAD_CONFIG_LINK_RAW_ENABLE
 #include "common/message.hpp"
@@ -165,7 +168,7 @@ public:
      *
      */
     otLogLevel GetLogLevel(void) const
-#if OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL
+#if OPENTHREAD_CONFIG_LOG_LEVEL_DYNAMIC_ENABLE
     {
         return mLogLevel;
     }
@@ -175,7 +178,7 @@ public:
     }
 #endif
 
-#if OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL
+#if OPENTHREAD_CONFIG_LOG_LEVEL_DYNAMIC_ENABLE
     /**
      * This method sets the log level.
      *
@@ -395,7 +398,7 @@ private:
     Mac::LinkRaw mLinkRaw;
 #endif // OPENTHREAD_RADIO || OPENTHREAD_CONFIG_LINK_RAW_ENABLE
 
-#if OPENTHREAD_CONFIG_ENABLE_DYNAMIC_LOG_LEVEL
+#if OPENTHREAD_CONFIG_LOG_LEVEL_DYNAMIC_ENABLE
     otLogLevel mLogLevel;
 #endif
 #if OPENTHREAD_ENABLE_VENDOR_EXTENSION

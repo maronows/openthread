@@ -85,13 +85,13 @@ enum
 
 static bool sDisabled;
 
-static otExtAddress sExtAddress;
 static otError      sReceiveError = OT_ERROR_NONE;
 static otRadioFrame sReceivedFrames[NRF_802154_RX_BUFFERS];
 static otRadioFrame sTransmitFrame;
 static uint8_t      sTransmitPsdu[OT_RADIO_FRAME_MAX_SIZE + 1];
 
 #if OPENTHREAD_CONFIG_MAC_HEADER_IE_SUPPORT
+static otExtAddress  sExtAddress;
 static otRadioIeInfo sTransmitIeInfo;
 static otInstance *  sInstance = NULL;
 #endif
@@ -222,12 +222,12 @@ void otPlatRadioSetPanId(otInstance *aInstance, uint16_t aPanId)
 void otPlatRadioSetExtendedAddress(otInstance *aInstance, const otExtAddress *aExtAddress)
 {
     OT_UNUSED_VARIABLE(aInstance);
-
+#if OPENTHREAD_CONFIG_MAC_HEADER_IE_SUPPORT
     for (size_t i = 0; i < sizeof(*aExtAddress); i++)
     {
         sExtAddress.m8[i] = aExtAddress->m8[sizeof(*aExtAddress) - 1 - i];
     }
-
+#endif
     nrf_802154_extended_address_set(aExtAddress->m8);
 }
 
@@ -252,6 +252,21 @@ void nrf5RadioDeinit(void)
     nrf_802154_sleep();
     nrf_802154_deinit();
     sPendingEvents = 0;
+}
+
+void nrf5RadioClearPendingEvents(void)
+{
+    sPendingEvents = 0;
+
+    for (uint32_t i = 0; i < NRF_802154_RX_BUFFERS; i++)
+    {
+        if (sReceivedFrames[i].mPsdu != NULL)
+        {
+            uint8_t *bufferAddress   = &sReceivedFrames[i].mPsdu[-1];
+            sReceivedFrames[i].mPsdu = NULL;
+            nrf_802154_buffer_free_raw(bufferAddress);
+        }
+    }
 }
 
 otRadioState otPlatRadioGetState(otInstance *aInstance)

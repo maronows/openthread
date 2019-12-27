@@ -52,7 +52,7 @@ COMMONCPPFLAGS                                                                  
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/clock                                            \
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/common                                           \
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/radio                                            \
-    -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/radio/fem/simple_gpio                            \
+    -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/radio/fem/three_pin_gpio                         \
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/radio/hal                                        \
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/radio/mac_features                               \
     -I$(top_srcdir)/third_party/NordicSemiconductor/drivers/radio/mac_features/ack_generator                 \
@@ -64,6 +64,7 @@ COMMONCPPFLAGS                                                                  
     -I$(top_srcdir)/third_party/NordicSemiconductor/libraries/app_error                                      \
     -I$(top_srcdir)/third_party/NordicSemiconductor/libraries/atfifo                                         \
     -I$(top_srcdir)/third_party/NordicSemiconductor/libraries/atomic                                         \
+    -I$(top_srcdir)/third_party/NordicSemiconductor/libraries/block_dev                                      \
     -I$(top_srcdir)/third_party/NordicSemiconductor/libraries/delay                                          \
     -I$(top_srcdir)/third_party/NordicSemiconductor/libraries/usb                                            \
     -I$(top_srcdir)/third_party/NordicSemiconductor/libraries/usb/config                                     \

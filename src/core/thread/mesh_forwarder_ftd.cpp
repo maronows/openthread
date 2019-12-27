@@ -80,7 +80,7 @@ otError MeshForwarder::SendMessage(Message &aMessage)
                     ip6Header.GetDestination() == mle.GetRealmLocalAllThreadNodesAddress())
                 {
                     // destined for all sleepy children
-                    for (ChildTable::Iterator iter(GetInstance(), ChildTable::kInStateValidOrRestoring); !iter.IsDone();
+                    for (ChildTable::Iterator iter(GetInstance(), Child::kInStateValidOrRestoring); !iter.IsDone();
                          iter++)
                     {
                         Child &child = *iter.GetChild();
@@ -94,7 +94,7 @@ otError MeshForwarder::SendMessage(Message &aMessage)
                 else
                 {
                     // destined for some sleepy children which subscribed the multicast address.
-                    for (ChildTable::Iterator iter(GetInstance(), ChildTable::kInStateValidOrRestoring); !iter.IsDone();
+                    for (ChildTable::Iterator iter(GetInstance(), Child::kInStateValidOrRestoring); !iter.IsDone();
                          iter++)
                     {
                         Child &child = *iter.GetChild();
@@ -296,7 +296,7 @@ void MeshForwarder::RemoveDataResponseMessages(void)
 
         if (!(ip6Header.GetDestination().IsMulticast()))
         {
-            for (ChildTable::Iterator iter(GetInstance(), ChildTable::kInStateAnyExceptInvalid); !iter.IsDone(); iter++)
+            for (ChildTable::Iterator iter(GetInstance(), Child::kInStateAnyExceptInvalid); !iter.IsDone(); iter++)
             {
                 IgnoreReturnValue(mIndirectSender.RemoveMessageFromSleepyChild(*message, *iter.GetChild()));
             }
@@ -416,13 +416,11 @@ otError MeshForwarder::UpdateIp6RouteFtd(Ip6::Header &ip6Header)
                 mMeshDest = Mle::Mle::GetRloc16(routerId);
             }
         }
-#if OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
         else if ((aloc16 >= Mle::kAloc16ServiceStart) && (aloc16 <= Mle::kAloc16ServiceEnd))
         {
             SuccessOrExit(error = GetDestinationRlocByServiceAloc(aloc16, mMeshDest));
         }
 
-#endif
         else
         {
             // TODO: support for Neighbor Discovery Agent ALOC
@@ -768,7 +766,6 @@ exit:
     return error;
 }
 
-#if OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
 otError MeshForwarder::GetDestinationRlocByServiceAloc(uint16_t aServiceAloc, uint16_t &aMeshDest)
 {
     otError                  error      = OT_ERROR_NONE;
@@ -826,7 +823,6 @@ otError MeshForwarder::GetDestinationRlocByServiceAloc(uint16_t aServiceAloc, ui
 exit:
     return error;
 }
-#endif // OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
 
 // LCOV_EXCL_START
 
