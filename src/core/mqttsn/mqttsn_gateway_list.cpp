@@ -135,12 +135,15 @@ void ActiveGatewayList::Clear()
 
 otError ActiveGatewayList::HandleTimer()
 {
+	otError error = OT_ERROR_NONE;
+	StaticListItem<GatewayInfo> *item = NULL;
+	uint32_t millisNow;
     if (mGatewayInfoList.IsEmpty())
     {
-        return OT_ERROR_NONE;
+        ExitNow(error = OT_ERROR_NONE);
     }
-    uint32_t millisNow = TimerMilli::GetNow().GetValue();
-    StaticListItem<GatewayInfo> *item = mGatewayInfoList.Head();
+	millisNow = TimerMilli::GetNow().GetValue();
+    item = mGatewayInfoList.Head();
     do
     {
         StaticListItem<GatewayInfo> *currentItem = item;
@@ -148,24 +151,28 @@ otError ActiveGatewayList::HandleTimer()
         GatewayInfo &info = currentItem->Value();
         if (millisNow > info.mLastUpdatedTimestamp + info.mDuration)
         {
-            mGatewayInfoList.Remove(item);
+            SuccessOrExit(error = mGatewayInfoList.Remove(currentItem));
         }
     }
     while (item != NULL);
-    return OT_ERROR_NONE;
+exit:
+	return error;
 }
 
 GatewayInfo *ActiveGatewayList::Find(GatewayId aGatewayId)
 {
     StaticListItem<GatewayInfo> *item = mGatewayInfoList.Head();
-    do
+    if (item != NULL)
     {
-        if (item->Value().GetGatewayId() == aGatewayId)
+        do
         {
-            return &item->Value();
-        }
+            if (item->Value().GetGatewayId() == aGatewayId)
+            {
+                return &item->Value();
+            }
+            item = item->Next();
+        } while (item != NULL);
     }
-    while ((item = item->Next()) != NULL);
     return NULL;
 }
 

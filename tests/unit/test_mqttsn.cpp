@@ -35,6 +35,25 @@
 
 using namespace ot::Mqttsn;
 
+#define TIMER_STARTUP_TIME 1000000
+
+static uint32_t sNow;
+
+static uint32_t testTimerAlarmGetNow(void)
+{
+    return sNow;
+}
+
+static void SetNow(uint32_t millis)
+{
+    sNow = millis;
+}
+
+static void InitTestTimer(void)
+{
+    g_testPlatAlarmGetNow  = testTimerAlarmGetNow;
+}
+
 template <typename ItemType>
 static StaticListItem<ItemType> *ListFind(StaticArrayList<ItemType> &list, const ItemType &value)
 {
@@ -217,7 +236,7 @@ void TestListAddToFullListAfterRemove(void)
     StaticListItem<GatewayInfo> itemArray[2];
     StaticArrayList<GatewayInfo> list(itemArray, 2);
 
-    printf("\nTest 6: Test remove and add to full list fails\n");
+    printf("\nTest 7: Test remove and add to full list fails\n");
 
     SuccessOrQuit(list.Add(gateway1), "StaticArrayList::Add() failed");
     SuccessOrQuit(list.Add(gateway2), "StaticArrayList::Add() failed");
@@ -231,9 +250,38 @@ void TestListAddToFullListAfterRemove(void)
     printf(" -- PASS\n");
 }
 
+void TestActiveGatewayListInfoNotRemovedBeforeKeepaliveTimeout(void)
+{
+    GatewayInfo gateway1 = CreateGatewayInfo1();
+    uint32_t duration = 900000;
+    ActiveGatewayList list = ActiveGatewayList();
+
+    printf("\nTest 8: Test GatewayInfo is not removed from ActiveGatewayList before keepalive timeout\n");
+    SetNow(TIMER_STARTUP_TIME);
+    list.Add(gateway1.GetGatewayId(), gateway1.GetGatewayAddress(), duration);
+    SetNow(TIMER_STARTUP_TIME + 1000);
+    SuccessOrQuit(list.HandleTimer(), "ActiveGatewayList::HandleTimer() failed");
+    VerifyOrQuit(list.GetList().Size() == 1, "List is empty");
+}
+
+void TestActiveGatewayListInfoRemovedAfterKeepaliveTimeout(void)
+{
+    GatewayInfo gateway1 = CreateGatewayInfo1();
+    uint32_t duration = 900000;
+    ActiveGatewayList list = ActiveGatewayList();
+
+    printf("\nTest 9: Test GatewayInfo is removed from ActiveGatewayList after keepalive timeout\n");
+    SetNow(TIMER_STARTUP_TIME);
+    list.Add(gateway1.GetGatewayId(), gateway1.GetGatewayAddress(), duration);	
+    SetNow(TIMER_STARTUP_TIME + 901000);	
+    SuccessOrQuit(list.HandleTimer(), "ActiveGatewayList::HandleTimer() failed");
+    VerifyOrQuit(list.GetList().Size() == 0, "GatewayInfo not removed");
+}
+
 #ifdef ENABLE_TEST_MAIN
 int main(void)
 {
+    InitTestTimer();
     TestListAddMultipleItems();
     TestListSize();
     TestListRemoveHead();
@@ -241,6 +289,8 @@ int main(void)
 	TestListRemoveItemLast();
     TestListAddToFullList();
     TestListAddToFullListAfterRemove();
+    TestActiveGatewayListInfoNotRemovedBeforeKeepaliveTimeout();
+    TestActiveGatewayListInfoRemovedAfterKeepaliveTimeout();
     printf("\nAll tests passed.\n");
     return 0;
 }
