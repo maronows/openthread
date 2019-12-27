@@ -146,7 +146,7 @@ void TestListRemoveHead(void)
     printf(" -- PASS\n");
 }
 
-void TestListRemoveItem(void)
+void TestListRemoveItemFirst(void)
 {
     GatewayInfo gateway1 = CreateGatewayInfo1();
     GatewayInfo gateway2 = CreateGatewayInfo2();
@@ -158,11 +158,34 @@ void TestListRemoveItem(void)
     SuccessOrQuit(list.Add(gateway1), "StaticArrayList::Add() failed");
     SuccessOrQuit(list.Add(gateway2), "StaticArrayList::Add() failed");
 
+    StaticListItem<GatewayInfo> *item = ListFind<GatewayInfo>(list, gateway1);
+    SuccessOrQuit(list.Remove(item), "StaticArrayList::Remove() failed");
+
+    VerifyOrQuit(ListContains<GatewayInfo>(list, gateway2), "List does not contain gateway2");
+    VerifyOrQuit(!ListContains<GatewayInfo>(list, gateway1), "List still contain gateway1");	
+	VerifyOrQuit(list.Size() == 1, "Size() has wrong value");
+
+    printf(" -- PASS\n");
+}
+
+void TestListRemoveItemLast(void)
+{
+    GatewayInfo gateway1 = CreateGatewayInfo1();
+    GatewayInfo gateway2 = CreateGatewayInfo2();
+    StaticListItem<GatewayInfo> itemArray[5];
+    StaticArrayList<GatewayInfo> list(itemArray, 5);
+
+    printf("\nTest 5: Test add two items to StatisArrayList and remove the last one\n");
+
+    SuccessOrQuit(list.Add(gateway1), "StaticArrayList::Add() failed");
+    SuccessOrQuit(list.Add(gateway2), "StaticArrayList::Add() failed");
+
     StaticListItem<GatewayInfo> *item = ListFind<GatewayInfo>(list, gateway2);
     SuccessOrQuit(list.Remove(item), "StaticArrayList::Remove() failed");
 
     VerifyOrQuit(ListContains<GatewayInfo>(list, gateway1), "List does not contain gateway1");
-    VerifyOrQuit(!ListContains<GatewayInfo>(list, gateway2), "List still contain gateway2");
+    VerifyOrQuit(!ListContains<GatewayInfo>(list, gateway2), "List still contain gateway2");	
+	VerifyOrQuit(list.Size() == 1, "Size() has wrong value");
 
     printf(" -- PASS\n");
 }
@@ -175,7 +198,7 @@ void TestListAddToFullList(void)
     StaticListItem<GatewayInfo> itemArray[2];
     StaticArrayList<GatewayInfo> list(itemArray, 2);
 
-    printf("\nTest 5: Test add to full list fails\n");
+    printf("\nTest 6: Test add to full list fails\n");
 
     SuccessOrQuit(list.Add(gateway1), "StaticArrayList::Add() failed");
     SuccessOrQuit(list.Add(gateway2), "StaticArrayList::Add() failed");
@@ -194,7 +217,7 @@ void TestListAddToFullListAfterRemove(void)
     StaticListItem<GatewayInfo> itemArray[2];
     StaticArrayList<GatewayInfo> list(itemArray, 2);
 
-    printf("\nTest 5: Test add to full list fails\n");
+    printf("\nTest 6: Test remove and add to full list fails\n");
 
     SuccessOrQuit(list.Add(gateway1), "StaticArrayList::Add() failed");
     SuccessOrQuit(list.Add(gateway2), "StaticArrayList::Add() failed");
@@ -214,7 +237,8 @@ int main(void)
     TestListAddMultipleItems();
     TestListSize();
     TestListRemoveHead();
-    TestListRemoveItem();
+    TestListRemoveItemFirst();
+	TestListRemoveItemLast();
     TestListAddToFullList();
     TestListAddToFullListAfterRemove();
     printf("\nAll tests passed.\n");

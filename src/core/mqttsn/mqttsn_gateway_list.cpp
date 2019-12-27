@@ -65,7 +65,7 @@ otError StaticArrayList<ItemType>::Remove(StaticListItem<ItemType> *aItem)
     }
     if (aItem == mHead)
     {
-        mHead = NULL;
+        mHead = aItem->Next();
         aItem->mIsRemoved = true;
         mSize--;
         return OT_ERROR_NONE;

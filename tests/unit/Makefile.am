@@ -165,9 +165,6 @@ TESTS_ENVIRONMENT                                                   = \
 test_aes_LDADD               = $(COMMON_LDADD)
 test_aes_SOURCES             = test_platform.cpp test_aes.cpp
 
-test_mqttsn_LDADD            = $(COMMON_LDADD)
-test_mqttsn_SOURCES          = test_platform.cpp test_mqttsn.cpp
-
 test_child_LDADD             = $(COMMON_LDADD)
 test_child_SOURCES           = test_platform.cpp test_child.cpp
 
@@ -200,6 +197,9 @@ test_message_SOURCES         = test_platform.cpp test_message.cpp
 
 test_message_queue_LDADD     = $(COMMON_LDADD)
 test_message_queue_SOURCES   = test_platform.cpp test_message_queue.cpp
+
+test_mqttsn_LDADD            = $(COMMON_LDADD)
+test_mqttsn_SOURCES          = test_platform.cpp test_mqttsn.cpp
 
 test_ncp_buffer_LDADD        = $(COMMON_LDADD)
 test_ncp_buffer_SOURCES      = test_platform.cpp test_ncp_buffer.cpp
