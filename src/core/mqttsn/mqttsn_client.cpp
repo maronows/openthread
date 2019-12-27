@@ -35,6 +35,8 @@
 #include "common/instance.hpp"
 #include "common/logging.hpp"
 
+#if OPENTHREAD_CONFIG_MQTTSN_ENABLE
+
 /**
  * @file
  *   This file includes implementation of MQTT-SN protocol v1.2 client.
@@ -1817,3 +1819,5 @@ void MqttsnClient::HandleSubscribeRetransmission(const Message &aMessage, const 
 }
 
 }
+
+#endif // OPENTHREAD_CONFIG_MQTTSN_ENABLE
