@@ -29,6 +29,7 @@
 #ifndef MQTTSN_CLIENT_HPP_
 #define MQTTSN_CLIENT_HPP_
 
+#include "mqttsn/mqttsn_gateway_list.hpp"
 #include "common/locator.hpp"
 #include "common/tasklet.hpp"
 #include "net/ip6_address.hpp"
@@ -794,6 +795,8 @@ public:
      */
     ClientState GetState(void);
 
+    const StaticArrayList<GatewayInfo> &GetActiveGateways(void);
+
     /**
      * Set callback function invoked when connection acknowledged or timed out.
      *
@@ -953,6 +956,7 @@ private:
     void PingreqReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void PingrespReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void DisconnectReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
+    void SearchGwReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
 
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
@@ -993,6 +997,7 @@ private:
     bool mTimeoutRaised;
     ClientState mClientState;
     bool mIsRunning;
+    ActiveGatewayList mActiveGateways;
     Tasklet mProcessTask;
     WaitingMessagesQueue<otMqttsnSubscribedHandler> mSubscribeQueue;
     WaitingMessagesQueue<otMqttsnRegisteredHandler> mRegisterQueue;

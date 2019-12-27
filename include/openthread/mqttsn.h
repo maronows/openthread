@@ -42,6 +42,11 @@ extern "C" {
 #define OPENTHREAD_CONFIG_MQTTSN_ENABLE 0
 #endif
 
+enum
+{
+    kMaxGatewayInfoCount = 5
+};
+
 /**
  * MQTT-SN message return code.
  *
@@ -184,6 +189,26 @@ typedef struct otMqttsnConfig {
      */
     uint8_t mRetransmissionCount;
 } otMqttsnConfig;
+
+/**
+ * MQTT-SN gateway ID.
+ *
+ */
+typedef uint8_t otMqttsnGatewayId;
+
+/**
+ * This structure contains information about advertised MQTT-SN gateway.
+ */
+typedef struct otMqttsnGatewayInfo {
+    /**
+     * ID of the gateway.
+     */
+    otMqttsnGatewayId mGatewayId;
+    /**
+     * IPv6 address of the gateway.
+     */
+    otIp6Address mGatewayAddress;
+} otMqttsnGatewayInfo;
 
 /**
  * Declaration of function for connection callback.
@@ -581,8 +606,11 @@ otError otMqttsnAwake(otInstance *aInstance, uint32_t aTimeout);
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
-otError otMqttsnSearchGateway(otInstance *aInstance, const otIp6Address* aMulticastAddress, uint16_t aPort, uint8_t aRadius);
+otError otMqttsnSearchGateway(otInstance *aInstance, const otIp6Address *aMulticastAddress, uint16_t aPort, uint8_t aRadius);
 
+uint16_t otMqttsnGetActiveGatewaysCount(otInstance *aInstance);
+
+uint16_t otMqttsnGetActiveGateways(otInstance *aInstance, otMqttsnGatewayInfo *aBuffer, uint16_t aBufferSize);
 
 /**
  * Set handler which is invoked when connection is acknowledged.

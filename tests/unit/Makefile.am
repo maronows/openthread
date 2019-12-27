@@ -115,6 +115,7 @@ check_PROGRAMS                                                     += \
     test-mac-frame                                                    \
     test-message                                                      \
     test-message-queue                                                \
+    test-mqttsn                                                       \
     test-network-data                                                 \
     test-priority-queue                                               \
     test-pskc                                                         \
@@ -163,6 +164,9 @@ TESTS_ENVIRONMENT                                                   = \
 
 test_aes_LDADD               = $(COMMON_LDADD)
 test_aes_SOURCES             = test_platform.cpp test_aes.cpp
+
+test_mqttsn_LDADD            = $(COMMON_LDADD)
+test_mqttsn_SOURCES          = test_platform.cpp test_mqttsn.cpp
 
 test_child_LDADD             = $(COMMON_LDADD)
 test_child_SOURCES           = test_platform.cpp test_child.cpp
@@ -237,6 +241,7 @@ PRETTY_FILES                                                        = \
     $(noinst_HEADERS)                                                 \
     $(test_address_sanitizer_SOURCES)                                 \
     $(test_aes_SOURCES)                                               \
+    $(test_mqttsn_SOURCES)                                            \
     $(test_child_SOURCES)                                             \
     $(test_child_table_SOURCES)                                       \
     $(test_hdlc_SOURCES)                                              \

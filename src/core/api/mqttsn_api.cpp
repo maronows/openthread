@@ -187,6 +187,28 @@ otError otMqttsnSearchGateway(otInstance *aInstance, const otIp6Address* aMultic
     return client.SearchGateway(*static_cast<const Ip6::Address *>(aMulticastAddress), aPort, aRadius);
 }
 
+uint16_t otMqttsnGetActiveGatewaysCount(otInstance *aInstance)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
+    return client.GetActiveGateways().Size();
+}
+
+uint16_t otMqttsnGetActiveGateways(otInstance *aInstance, otMqttsnGatewayInfo *aBuffer, uint16_t aBufferSize)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
+    const Mqttsn::StaticListItem<Mqttsn::GatewayInfo> *item = client.GetActiveGateways().Head();
+    uint16_t i = 0;
+    while (item != NULL && i < aBufferSize)
+    {
+        aBuffer[i] = *static_cast<const otMqttsnGatewayInfo *>(&item->Value());
+        i++;
+        item = item->Next();
+    }
+    return i;
+}
+
 otError otMqttsnSetConnectedHandler(otInstance *aInstance, otMqttsnConnectedHandler aHandler, void *aContext)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);

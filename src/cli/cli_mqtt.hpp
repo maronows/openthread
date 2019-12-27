@@ -83,6 +83,7 @@ private:
     otError ProcessSleep(int argc, char *argv[]);
     otError ProcessAwake(int argc, char *argv[]);
     otError ProcessSearchgw(int argc, char *argv[]);
+    otError ProcessGateways(int argc, char *argv[]);
 
     static void HandleConnected(otMqttsnReturnCode aCode, void *aContext);
     void        HandleConnected(otMqttsnReturnCode aCode);

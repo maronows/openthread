@@ -54,6 +54,13 @@
  */
 #define MQTTSN_MIN_PACKET_LENGTH 2
 
+/**
+ * Default expected ADVERTISE message interval is 15 min - with some timing
+ * error avoidance 17 min.
+ *
+ */
+#define MQTTSN_DEFAULT_ADVERTISE_DURATION 1020000
+
 namespace ot {
 
 namespace Mqttsn {
@@ -251,6 +258,7 @@ MqttsnClient::MqttsnClient(Instance& instance)
     , mTimeoutRaised(false)
     , mClientState(kStateDisconnected)
     , mIsRunning(false)
+    , mActiveGateways()
     , mProcessTask(instance, &MqttsnClient::HandleProcessTask, this)
     , mSubscribeQueue(HandleSubscribeTimeout, this, HandleSubscribeRetransmission, this)
     , mRegisterQueue(HandleRegisterTimeout, this, HandleMessageRetransmission, this)
@@ -366,6 +374,9 @@ void MqttsnClient::HandleUdpReceive(void *aContext, otMessage *aMessage, const o
     case kTypeDisconnect:
         client->DisconnectReceived(messageInfo, data, length);
         break;
+    case kTypeSearchGw:
+        client->SearchGwReceived(messageInfo, data, length);
+        break;
     default:
         break;
     }
@@ -393,6 +404,7 @@ void MqttsnClient::ConnackReceived(const Ip6::MessageInfo &messageInfo, const un
         mConnectQueue.Dequeue(*connectMessage);
 
         mClientState = kStateActive;
+
         if (mConnectedCallback)
         {
             mConnectedCallback(connackMessage.GetReturnCode(), mConnectContext);
@@ -528,6 +540,16 @@ void MqttsnClient::AdvertiseReceived(const Ip6::MessageInfo &messageInfo, const 
     {
         return;
     }
+
+    otLogDebgMqttsn("received advertise from %s[%u]: gateway_id=%u, keepalive=%u",
+            messageInfo.GetPeerAddr().ToString().AsCString(), (uint32_t)messageInfo.GetPeerPort(),
+            (uint32_t)advertiseMessage.GetGatewayId(), (uint32_t)advertiseMessage.GetDuration());
+    // Multiply duration by 1.2 to minimize timing error probability and multiply by 1000
+    // to milliseconds
+    uint32_t duration = (advertiseMessage.GetDuration() * 12 * 1000) / 10;
+    // Add advertised gateway to active gateways list
+    mActiveGateways.Add(advertiseMessage.GetGatewayId(), messageInfo.GetPeerAddr(), duration);
+
     if (mAdvertiseCallback)
     {
         mAdvertiseCallback(&messageInfo.GetPeerAddr(), advertiseMessage.GetGatewayId(),
@@ -544,8 +566,16 @@ void MqttsnClient::GwinfoReceived(const Ip6::MessageInfo &messageInfo, const uns
     }
     if (mSearchGwCallback)
     {
+        // If received from gateway add to active gateways list with default duration
+        if (!gwInfoMessage.GetHasAddress())
+        {
+            mActiveGateways.Add(gwInfoMessage.GetGatewayId(),
+                    messageInfo.GetPeerAddr(), MQTTSN_DEFAULT_ADVERTISE_DURATION);
+        }
+
         const Ip6::Address &address = (gwInfoMessage.GetHasAddress()) ? gwInfoMessage.GetAddress()
             : messageInfo.GetPeerAddr();
+
         mSearchGwCallback(&address, gwInfoMessage.GetGatewayId(), mSearchGwContext);
     }
 }
@@ -970,6 +1000,44 @@ void MqttsnClient::DisconnectReceived(const Ip6::MessageInfo &messageInfo, const
     }
 }
 
+void MqttsnClient::SearchGwReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length)
+{
+    SearchGwMessage searchGwMessage;
+    // Do not respond to SEARCHGW messages when client not active
+    if (GetState() != kStateActive)
+    {
+        return;
+    }
+    if (searchGwMessage.Deserialize(data, length) != OT_ERROR_NONE)
+    {
+        return;
+    }
+
+#if OPENTHREAD_FTD
+    // Respond with GWINFO message for each active gateway in cached list
+    const StaticListItem<GatewayInfo> *gatewayInfoItem = GetActiveGateways().Head();
+    do
+    {
+        const GatewayInfo &info = gatewayInfoItem->Value();
+        Message* responseMessage = NULL;
+        int32_t packetLength = -1;
+        unsigned char buffer[MAX_PACKET_SIZE];
+
+        GwInfoMessage gwInfoMessage = GwInfoMessage(info.GetGatewayId(), true, info.GetGatewayAddress());
+        if (gwInfoMessage.Serialize(buffer, MAX_PACKET_SIZE, &packetLength) != OT_ERROR_NONE)
+        {
+            return;
+        }
+        if (NewMessage(&responseMessage, buffer, packetLength) != OT_ERROR_NONE
+                || SendMessage(*responseMessage, messageInfo.GetPeerAddr(), mConfig.GetPort()) != OT_ERROR_NONE)
+        {
+            return;
+        }
+    }
+    while ((gatewayInfoItem = gatewayInfoItem->Next()) != NULL);
+#endif
+}
+
 void MqttsnClient::HandleProcessTask(Tasklet &aTasklet)
 {
     otError error = aTasklet.GetOwner<MqttsnClient>().Process();
@@ -1001,6 +1069,8 @@ otError MqttsnClient::Stop()
 {
     mIsRunning = false;
     otError error = mSocket.Close();
+    // Clear active gateways list because ADVERTISE messages won't be received anymore
+    mActiveGateways.Clear();
     // Disconnect client if it is not disconnected already
     mClientState = kStateDisconnected;
     if (mClientState != kStateDisconnected && mClientState != kStateLost)
@@ -1039,6 +1109,9 @@ otError MqttsnClient::Process()
     SuccessOrExit(error = mPublishQos1Queue.HandleTimer());
     SuccessOrExit(error = mPublishQos2PublishQueue.HandleTimer());
     SuccessOrExit(error = mPublishQos2PubrelQueue.HandleTimer());
+
+    // Handle active gateways
+    SuccessOrExit(error = mActiveGateways.HandleTimer());
 
 exit:
     // Handle timeout
@@ -1512,6 +1585,11 @@ exit:
 ClientState MqttsnClient::GetState()
 {
     return mClientState;
+}
+
+const StaticArrayList<GatewayInfo> &MqttsnClient::GetActiveGateways()
+{
+    return mActiveGateways.GetList();
 }
 
 otError MqttsnClient::SetConnectedCallback(otMqttsnConnectedHandler aCallback, void* aContext)
