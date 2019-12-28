@@ -1019,10 +1019,10 @@ void MqttsnClient::SearchGwReceived(const Ip6::MessageInfo &messageInfo, const u
     }
 
     // Respond with GWINFO message for each active gateway in cached list
-    const StaticListItem<GatewayInfo> *gatewayInfoItem = GetActiveGateways().Head();
+    const StaticListEntry<GatewayInfo> *gatewayInfoEntry = GetActiveGateways().GetHead();
     do
     {
-        const GatewayInfo &info = gatewayInfoItem->Value();
+        const GatewayInfo &info = gatewayInfoEntry->GetValue();
         Message* responseMessage = NULL;
         int32_t packetLength = -1;
         unsigned char buffer[MAX_PACKET_SIZE];
@@ -1038,7 +1038,7 @@ void MqttsnClient::SearchGwReceived(const Ip6::MessageInfo &messageInfo, const u
             return;
         }
     }
-    while ((gatewayInfoItem = gatewayInfoItem->Next()) != NULL);
+    while ((gatewayInfoEntry = gatewayInfoEntry->GetNext()) != NULL);
 #else
     OT_UNUSED_VARIABLE(messageInfo);
     OT_UNUSED_VARIABLE(data);
@@ -1590,12 +1590,12 @@ exit:
     return error;
 }
 
-ClientState MqttsnClient::GetState()
+ClientState MqttsnClient::GetState() const
 {
     return mClientState;
 }
 
-const StaticArrayList<GatewayInfo> &MqttsnClient::GetActiveGateways()
+const StaticArrayList<GatewayInfo> &MqttsnClient::GetActiveGateways() const
 {
     return mActiveGateways.GetList();
 }

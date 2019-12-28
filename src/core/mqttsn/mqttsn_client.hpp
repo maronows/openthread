@@ -810,7 +810,7 @@ public:
      * @returns Current client state.
      *
      */
-    ClientState GetState(void);
+    ClientState GetState(void) const;
 
     /**
      * Get list of active MQTT-SN gateways. Gateways are periodically advertised
@@ -818,7 +818,7 @@ public:
      *
      * @returns A reference to list with active gateways information.
      */
-    const StaticArrayList<GatewayInfo> &GetActiveGateways(void);
+    const StaticArrayList<GatewayInfo> &GetActiveGateways(void) const;
 
     /**
      * Set callback function invoked when connection acknowledged or timed out.

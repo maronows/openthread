@@ -31,6 +31,7 @@
 
 #include <openthread/mqttsn.h>
 #include "net/ip6_address.hpp"
+#include "common/linked_list.hpp"
 
 /**
  * @file
@@ -65,110 +66,23 @@ namespace Mqttsn {
 typedef otMqttsnGatewayId GatewayId;
 
 /**
- * Generic linked list item (node) class.
+ * Generic statically allocated linked list entry (node) class.
  *
  */
-template <typename ItemType> class StaticListItem;
-
-/**
- * Generic linked list.
- *
- */
-template <typename ItemType>
-class StaticArrayList
+template <class Type>
+class StaticListEntry : public LinkedListEntry<StaticListEntry<Type> >
 {
-public:
-    /**
-     * This constructor initializes the object.
-     *
-     * @param[in]  aItems  A Pointer to statically allocated buffer where list items will be stored.
-     * @param[in]  aItems  Maximal number of items.
-     *
-     */
-    StaticArrayList(StaticListItem<ItemType> *aItems, uint16_t aMaxSize);
-
-    /**
-     * Get head item of the list.
-     *
-     * @returns A pointer to head item of the list. NULL is returned if list is empty.
-     *
-     */
-    StaticListItem<ItemType> *Head(void) { return mHead; }
-
-    /**
-     * Get head item of the list.
-     *
-     * @returns A pointer to constant head item of the list. NULL is returned if list is empty.
-     *
-     */
-    const StaticListItem<ItemType> *Head(void) const { return mHead; }
-
-    /**
-     * Add new item to the list.
-     *
-     * @param[in]  aValue  A reference to new item value.
-     *
-     * @retval OT_ERROR_NONE     New item was successfully added.
-     * @retval OT_ERROR_NO_BUFS  There is not space left in list buffer.
-     */
-    otError Add(const ItemType &aValue);
-
-    /**
-     * Remove existing item from the list.
-     *
-     * @param[in]  aItem  A pointer to the item to be removed.
-     *
-     * @retval OT_ERROR_NONE       Item was successfully removed.
-     * @retval OT_ERROR_NOT_FOUND  Item is not present in the list.
-     */
-    otError Remove(StaticListItem<ItemType> *aItem);
-
-    /**
-     * Get current number of items in the list.
-     *
-     * @returns  Number of items in the list.
-     *
-     */
-    uint16_t Size(void) const { return mSize; };
-
-    /**
-     * Check if the list is empty.
-     *
-     * @returns  Returns true if list contains no items or false otherwise.
-     *
-     */
-    bool IsEmpty(void) const { return mSize == 0; };
-
-    /**
-     * Remove all items from the list.
-     *
-     */
-    void Clear(void);
-
-private:
-    StaticListItem<ItemType> *mHead;
-    StaticListItem<ItemType> *mItems;
-    uint16_t mMaxSize;
-    uint16_t mSize;
-};
-
-/**
- * Generic linked list item (node) class.
- *
- */
-template <typename ItemType>
-class StaticListItem
-{
-    friend class StaticArrayList<ItemType>;
+    friend  LinkedListEntry<StaticListEntry<Type> >;
 
 public:
     /**
      * This constructor initializes the object.
      *
      */
-    StaticListItem(void)
-        : mValue()
+    StaticListEntry(void)
+        : LinkedListEntry<StaticListEntry<Type> >()
         , mNext(NULL)
+        , mValue()
         , mIsRemoved(false)
     {
         ;
@@ -180,9 +94,10 @@ public:
      * @param[in]  aValue  A reference to value of the list item.
      *
      */
-    StaticListItem(const ItemType &aValue)
-        : mValue(aValue)
+    StaticListEntry(const Type &aValue)
+        : LinkedListEntry<StaticListEntry<Type> >()
         , mNext(NULL)
+        , mValue(aValue)
         , mIsRemoved(false)
     {
         ;
@@ -194,10 +109,7 @@ public:
      * @returns  A reference to the value of the list item.
      *
      */
-    ItemType &Value(void)
-    {
-        return mValue;
-    }
+    Type &GetValue(void) { return mValue; }
 
     /**
      * Get value of the list item.
@@ -205,48 +117,114 @@ public:
      * @returns  A reference to constant value of the list item.
      *
      */
-    const ItemType &Value(void) const
-    {
-        return mValue;
-    }
+    const Type &GetValue(void) const { return mValue; }
 
     /**
-     * Check if there is next item in the list.
+     * This method indicates whether the list entry is already removed from the buffer.
      *
-     * @returns  Returns true if there is next item in the list or false if current item
-     *           is the last one.
+     * @retval TRUE   If the entry is removed from the list.
+     * @retval FALSE  If the entry is not removed from the list.
      *
      */
-    bool HasNext(void) const
-    {
-        return mNext != NULL;
-    }
+    bool IsRemoved(void) const { return mIsRemoved; }
 
     /**
-     * Get next item in the list.
+     * Set the flag if the entry is removed from the buffer.
      *
-     * @returns  Returns a pointer to next item in the list or NULL if there is none.
+     * @param[in]  aValue  True if the entry is removed from the buffer.
      *
      */
-    StaticListItem<ItemType> *Next(void)
-    {
-        return mNext;
-    }
+    void SetIsRemoved(bool aIsRemoved) { mIsRemoved = aIsRemoved; }
 
-    /**
-     * Get next item in the list.
-     *
-     * @returns  Returns a pointer to const next item in the list or NULL if there is none.
-     *
-     */
-    const StaticListItem<ItemType> *Next(void) const
-    {
-        return mNext;
-    }
 private:
-    ItemType mValue;
-    StaticListItem<ItemType> *mNext;
+    StaticListEntry<Type> *mNext;
+    Type mValue;
     bool mIsRemoved;
+};
+
+/**
+ * Generic linked list with statically allocated buffer for storing entries.
+ * All entries are copied into the buffer.
+ *
+ */
+template<class Type>
+class StaticArrayList
+{
+public:
+    /**
+     * This constructor initializes the object.
+     *
+     * @param[in]  aBuffer  A Pointer to statically allocated buffer where list items will be stored.
+     * @param[in]  aSize    Maximal number of items.
+     *
+     */
+    StaticArrayList(StaticListEntry<Type> *aBuffer, uint16_t aSize);
+
+    /**
+     * This method returns the entry at the head of the linked list
+     *
+     * @returns Pointer to the entry at the head of the linked list, or NULL if list is empty.
+     *
+     */
+    StaticListEntry<Type> *GetHead(void);
+
+    /**
+     * This method returns the entry at the head of the linked list.
+     *
+     * @returns Pointer to the entry at the head of the linked list, or NULL if list is empty.
+     *
+     */
+    const StaticListEntry<Type> *GetHead(void) const;
+
+    /**
+     * Add new item to the list. The new item is copied to static buffer.
+     *
+     * @param[in]  aValue  A reference to new item value.
+     *
+     * @retval OT_ERROR_NONE     New item was successfully added.
+     * @retval OT_ERROR_NO_BUFS  There is not space left in list buffer.
+     */
+    otError Add(const Type &aEntry);
+
+    /**
+     * Remove existing item from the list.
+     *
+     * @param[in]  aItem  A pointer to the item to be removed.
+     *
+     * @retval OT_ERROR_NONE       Item was successfully removed.
+     * @retval OT_ERROR_NOT_FOUND  Item is not present in the list.
+     */
+    otError Remove(StaticListEntry<Type> &aEntry);
+
+    /**
+     * Get current number of items in the list.
+     *
+     * @returns  Number of items in the list.
+     *
+     */
+    uint16_t Size(void) const { return mSize; };
+
+    /**
+     * This method indicates whether the list is empty or not.
+     *
+     * @retval TRUE   If the list is empty.
+     * @retval FALSE  If the list is not empty.
+     *
+     */
+    bool IsEmpty(void) const;
+
+    /**
+     * Remove all items from the list.
+     *
+     */
+    void Clear(void);
+
+private:
+
+    LinkedList<StaticListEntry<Type> > mList;
+    StaticListEntry<Type> *mBuffer;
+    uint16_t mMaxSize;
+    uint16_t mSize;
 };
 
 /**
@@ -383,14 +361,6 @@ public:
     otError Add(GatewayId aGatewayId, const ot::Ip6::Address &aGatewayAddress, uint32_t aDuration);
 
     /**
-     * Check if there is no active gateway.
-     *
-     * @returns  Returns true if list contains no gateways or false otherwise.
-     *
-     */
-    bool IsEmpty(void) const;
-
-    /**
      * Remove all gateways from the list.
      *
      */
@@ -410,7 +380,7 @@ public:
      * @returns  A reference to the list of active gateways.
      *
      */
-    const StaticArrayList<GatewayInfo> &GetList(void);
+    const StaticArrayList<GatewayInfo> &GetList(void) const;
 
 private:
     /**
@@ -423,7 +393,7 @@ private:
      */
     GatewayInfo *Find(GatewayId aGatewayId);
 
-    StaticListItem<GatewayInfo> mGatewayInfoListArray[kMaxGatewayInfoCount];
+    StaticListEntry<GatewayInfo> mGatewayInfoListArray[kMaxGatewayInfoCount];
     StaticArrayList<GatewayInfo> mGatewayInfoList;
 };
 

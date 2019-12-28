@@ -33,83 +33,88 @@ namespace ot {
 
 namespace Mqttsn {
 	
-template <typename ItemType>
-StaticArrayList<ItemType>::StaticArrayList(StaticListItem<ItemType> *aItems, uint16_t aMaxSize)
-    : mHead(NULL)
-    , mItems(aItems)
-    , mMaxSize(aMaxSize)
+template <typename Type>
+StaticArrayList<Type>::StaticArrayList(StaticListEntry<Type> *aBuffer, uint16_t aSize)
+    : mList()
+    , mBuffer(aBuffer)
+    , mMaxSize(aSize)
     , mSize(0)
 {
     Clear();
 }
 
-template <typename ItemType>
-otError StaticArrayList<ItemType>::Add(const ItemType &aValue)
+template <typename Type>
+StaticListEntry<Type> *StaticArrayList<Type>::GetHead(void)
+{
+    return mList.GetHead();
+}
+
+template <typename Type>
+const StaticListEntry<Type> *StaticArrayList<Type>::GetHead(void) const
+{
+    return mList.GetHead();
+}
+
+template <typename Type>
+otError StaticArrayList<Type>::Add(const Type &aEntry)
 {
     otError error = OT_ERROR_NO_BUFS;
-    if (mItems == NULL || mMaxSize == 0 || mSize >= mMaxSize)
+    if (mBuffer == NULL || mMaxSize == 0 || mSize >= mMaxSize)
     {
         return error;
     }
     for (uint16_t i = 0; i < mMaxSize; i++)
     {
         // Find free space in the buffer for new item
-        if (mItems[i].mIsRemoved)
+        if (mBuffer[i].IsRemoved())
         {
-            mItems[i] = StaticListItem<ItemType>(aValue);
-            mItems[i].mNext = mHead;
-            mHead = &mItems[i];
-            mSize++;
-            error = OT_ERROR_NONE;
+            mBuffer[i] = aEntry;
+            mBuffer[i].SetIsRemoved(false);
+            error = mList.Add(mBuffer[i]);
+            if (error == OT_ERROR_NONE)
+            {
+                mSize++;
+            }
             break;
         }
     }
     return error;
 }
 
-template <typename ItemType>
-otError StaticArrayList<ItemType>::Remove(StaticListItem<ItemType> *aItem)
+template <typename Type>
+otError StaticArrayList<Type>::Remove(StaticListEntry<Type> &aEntry)
 {
-    if (mItems == NULL || IsEmpty())
+    otError error = OT_ERROR_NOT_FOUND;
+    if (mBuffer == NULL || mList.IsEmpty())
     {
-        return OT_ERROR_NOT_FOUND;
+        return error;
     }
-    if (aItem == mHead)
-    {
-        mHead = aItem->Next();
-        aItem->mIsRemoved = true;
-        mSize--;
-        return OT_ERROR_NONE;
-    }
-    StaticListItem<ItemType> *previousItem = mHead;
-    while (previousItem->HasNext())
-    {
-        if (previousItem->Next() == aItem)
-        {
-            previousItem->mNext = aItem->Next();
-            aItem->mIsRemoved = true;
-            mSize--;
-            return OT_ERROR_NONE;
-        }
-        previousItem = previousItem->Next();
-    }
-    return OT_ERROR_NOT_FOUND;
+    SuccessOrExit(error = mList.Remove(aEntry));
+    aEntry.SetIsRemoved(true);
+    mSize--;
+exit:
+    return error;
 }
 
-template <typename ItemType>
-void StaticArrayList<ItemType>::Clear(void)
+template<typename Type>
+bool StaticArrayList<Type>::IsEmpty(void) const
 {
-    if (mItems == NULL)
+    return mList.IsEmpty();
+}
+
+template <typename Type>
+void StaticArrayList<Type>::Clear(void)
+{
+    if (mBuffer == NULL)
     {
         return;
     }
     for (uint16_t i = 0; i < mMaxSize; i++)
     {
-        mItems[i].mIsRemoved = true;
-        mItems[i].mNext = NULL;
+        mBuffer[i].SetIsRemoved(true);
     }
-    mHead = NULL;
     mSize = 0;
+    mList.Clear();
 }
 
 otError ActiveGatewayList::Add(GatewayId aGatewayId, const ot::Ip6::Address &aGatewayAddress, uint32_t aDuration)
@@ -135,11 +140,6 @@ exit:
     return error;
 }
 
-bool ActiveGatewayList::IsEmpty(void) const
-{
-    return mGatewayInfoList.IsEmpty();
-}
-
 void ActiveGatewayList::Clear()
 {
     mGatewayInfoList.Clear();
@@ -148,48 +148,48 @@ void ActiveGatewayList::Clear()
 otError ActiveGatewayList::HandleTimer(void)
 {
 	otError error = OT_ERROR_NONE;
-	StaticListItem<GatewayInfo> *item = NULL;
+	StaticListEntry<GatewayInfo> *entry = NULL;
 	uint32_t millisNow;
     if (mGatewayInfoList.IsEmpty())
     {
         ExitNow(error = OT_ERROR_NONE);
     }
 	millisNow = TimerMilli::GetNow().GetValue();
-    item = mGatewayInfoList.Head();
+    entry = mGatewayInfoList.GetHead();
     // Find all expired gateways in the list and remove them
     do
     {
-        StaticListItem<GatewayInfo> *currentItem = item;
-        item = currentItem->Next();
-        GatewayInfo &info = currentItem->Value();
+        StaticListEntry<GatewayInfo> *currentEntry = entry;
+        GatewayInfo &info = currentEntry->GetValue();
+        entry = currentEntry->GetNext();
         if (millisNow > info.mLastUpdatedTimestamp + info.mDuration)
         {
-            SuccessOrExit(error = mGatewayInfoList.Remove(currentItem));
+            SuccessOrExit(error = mGatewayInfoList.Remove(*currentEntry));
         }
     }
-    while (item != NULL);
+    while (entry != NULL);
 exit:
 	return error;
 }
 
 GatewayInfo *ActiveGatewayList::Find(GatewayId aGatewayId)
 {
-    StaticListItem<GatewayInfo> *item = mGatewayInfoList.Head();
-    if (item != NULL)
+    StaticListEntry<GatewayInfo> *entry = mGatewayInfoList.GetHead();
+    if (entry != NULL)
     {
         do
         {
-            if (item->Value().GetGatewayId() == aGatewayId)
+            if (entry->GetValue().GetGatewayId() == aGatewayId)
             {
-                return &item->Value();
+                return &entry->GetValue();
             }
-            item = item->Next();
-        } while (item != NULL);
+            entry = entry->GetNext();
+        } while (entry != NULL);
     }
     return NULL;
 }
 
-const StaticArrayList<GatewayInfo> &ActiveGatewayList::GetList(void)
+const StaticArrayList<GatewayInfo> &ActiveGatewayList::GetList(void) const
 {
     return mGatewayInfoList;
 }

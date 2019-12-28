@@ -198,13 +198,13 @@ uint16_t otMqttsnGetActiveGateways(otInstance *aInstance, otMqttsnGatewayInfo *a
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
     Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    const Mqttsn::StaticListItem<Mqttsn::GatewayInfo> *item = client.GetActiveGateways().Head();
+    const Mqttsn::StaticListEntry<Mqttsn::GatewayInfo> *entry = client.GetActiveGateways().GetHead();
     uint16_t i = 0;
-    while (item != NULL && i < aBufferSize)
+    while (entry != NULL && i < aBufferSize)
     {
-        aBuffer[i] = *static_cast<const otMqttsnGatewayInfo *>(&item->Value());
+        aBuffer[i] = *static_cast<const otMqttsnGatewayInfo *>(&entry->GetValue());
         i++;
-        item = item->Next();
+        entry = entry->GetNext();
     }
     return i;
 }
