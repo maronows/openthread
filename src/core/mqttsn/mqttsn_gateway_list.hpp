@@ -122,8 +122,8 @@ public:
     /**
      * This method indicates whether the list entry is already removed from the buffer.
      *
-     * @retval TRUE   If the entry is removed from the list.
-     * @retval FALSE  If the entry is not removed from the list.
+     * @retval TRUE   If the entry is removed from the buffer.
+     * @retval FALSE  If the entry is not removed from the buffer.
      *
      */
     bool IsRemoved(void) const { return mIsRemoved; }
@@ -131,7 +131,7 @@ public:
     /**
      * Set the flag if the entry is removed from the buffer.
      *
-     * @param[in]  aValue  True if the entry is removed from the buffer.
+     * @param[in]  aIsRemoved  True if the entry is removed from the buffer.
      *
      */
     void SetIsRemoved(bool aIsRemoved) { mIsRemoved = aIsRemoved; }
@@ -161,17 +161,17 @@ public:
     StaticArrayList(StaticListEntry<Type> *aBuffer, uint16_t aSize);
 
     /**
-     * This method returns the entry at the head of the linked list
+     * This method returns the entry at the head of the list
      *
-     * @returns Pointer to the entry at the head of the linked list, or NULL if list is empty.
+     * @returns Pointer to the entry at the head of the list, or NULL if list is empty.
      *
      */
     StaticListEntry<Type> *GetHead(void);
 
     /**
-     * This method returns the entry at the head of the linked list.
+     * This method returns the entry at the head of the list.
      *
-     * @returns Pointer to the entry at the head of the linked list, or NULL if list is empty.
+     * @returns Pointer to the entry at the head of the list, or NULL if list is empty.
      *
      */
     const StaticListEntry<Type> *GetHead(void) const;
@@ -179,7 +179,7 @@ public:
     /**
      * Add new item to the list. The new item is copied to static buffer.
      *
-     * @param[in]  aValue  A reference to new item value.
+     * @param[in]  aEntry  A reference to new item value.
      *
      * @retval OT_ERROR_NONE     New item was successfully added.
      * @retval OT_ERROR_NO_BUFS  There is not space left in list buffer.
@@ -189,7 +189,7 @@ public:
     /**
      * Remove existing item from the list.
      *
-     * @param[in]  aItem  A pointer to the item to be removed.
+     * @param[in]  aEntry  A pointer to the item to be removed.
      *
      * @retval OT_ERROR_NONE       Item was successfully removed.
      * @retval OT_ERROR_NOT_FOUND  Item is not present in the list.
