@@ -26,12 +26,14 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <openthread/config.h>
+
 #include <openthread/mqttsn.h>
+#include "common/code_utils.hpp"
+#include "mqttsn/mqttsn_gateway_list.hpp"
 
 #include "test_platform.h"
 #include "test_util.h"
-#include "common/code_utils.hpp"
-#include "mqttsn/mqttsn_gateway_list.hpp"
 
 using namespace ot::Mqttsn;
 
@@ -57,18 +59,18 @@ void InitTestTimer(void)
 template <typename ItemType>
 static StaticListEntry<ItemType> *ListFind(StaticArrayList<ItemType> &list, const ItemType &value)
 {
-    if (list.IsEmpty() || list.Head() == NULL)
+    if (list.IsEmpty() || list.GetHead() == NULL)
     {
         return NULL;
     }
-    StaticListEntry<ItemType> *entry = list.Head();
+    StaticListEntry<ItemType> *entry = list.GetHead();
     do
     {
-        if (value == entry->Value())
+        if (value == entry->GetValue())
         {
             return entry;
         }
-        entry = entry->Next();
+        entry = entry->GetNext();
     } while (entry != NULL);
     return NULL;
 }
@@ -278,7 +280,6 @@ void TestActiveGatewayListInfoRemovedAfterKeepaliveTimeout(void)
     VerifyOrQuit(list.GetList().Size() == 0, "GatewayInfo not removed");
 }
 
-#ifdef ENABLE_TEST_MAIN
 int main(void)
 {
     InitTestTimer();
@@ -294,4 +295,3 @@ int main(void)
     printf("\nAll tests passed.\n");
     return 0;
 }
-#endif
