@@ -273,7 +273,7 @@ MqttsnClient::MqttsnClient(Instance& instance)
     , mPublishQos2PubrecQueue(HandlePublishQos2PubrecTimeout, this, HandleMessageRetransmission, this)
     , mConnectQueue(HandleConnectTimeout, this, HandleMessageRetransmission, this)
     , mDisconnectQueue(HandleDisconnectTimeout, this, HandleMessageRetransmission, this)
-    , mPingreqQueue(HandlePingreqTimeout, this, HandleMessageRetransmission, this)
+    , mPingreqQueue(HandlePingreqTimeout, this, HandlePingreqRetransmission, this)
     , mConnectedCallback(NULL)
     , mConnectContext(NULL)
     , mPublishReceivedCallback(NULL)
@@ -1187,6 +1187,7 @@ otError MqttsnClient::Connect(const MqttsnConfig &aConfig)
 
     // Set next keepalive PINGREQ time
     mPingReqTime = TimerMilli::GetNow().GetValue() + mConfig.GetKeepAlive() * 700;
+    ResetPingreqTime();
 exit:
     return error;
 }
@@ -1708,7 +1709,7 @@ otError MqttsnClient::PingGateway()
     }
 
     // There is already pingreq message waiting
-    if (!mConnectQueue.IsEmpty())
+    if (!mPingreqQueue.IsEmpty())
     {
         goto exit;
     }
@@ -1723,6 +1724,7 @@ otError MqttsnClient::PingGateway()
             mConfig.GetRetransmissionTimeout() * 1000, mConfig.GetRetransmissionCount(), NULL, NULL)));
 
     mPingReqTime = TimerMilli::GetNow().GetValue() + mConfig.GetKeepAlive() * 700;
+    ResetPingreqTime();
 
 exit:
     return error;
@@ -1741,12 +1743,20 @@ void MqttsnClient::OnDisconnected()
     mPublishQos1Queue.ForceTimeout();
     mPublishQos2PublishQueue.ForceTimeout();
     mPublishQos2PubrelQueue.ForceTimeout();
+    mPublishQos2PubrecQueue.ForceTimeout();
+    mPingreqQueue.ForceTimeout();
+    mDisconnectQueue.ForceTimeout();
 }
 
 bool MqttsnClient::VerifyGatewayAddress(const Ip6::MessageInfo &aMessageInfo)
 {
     return aMessageInfo.GetPeerAddr() == mConfig.GetAddress()
         && aMessageInfo.GetPeerPort() == mConfig.GetPort();
+}
+
+void MqttsnClient::ResetPingreqTime(void)
+{
+    mPingReqTime = TimerMilli::GetNow().GetValue() + mConfig.GetKeepAlive() * 800;
 }
 
 void MqttsnClient::HandleSubscribeTimeout(const MessageMetadata<otMqttsnSubscribedHandler> &aMetadata, void* aContext)
@@ -1903,6 +1913,18 @@ void MqttsnClient::HandleSubscribeRetransmission(const Message &aMessage, const 
         return;
     }
     client->SendMessage(*retransmissionMessage, aAddress, aPort);
+}
+
+void MqttsnClient::HandlePingreqRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext)
+{
+    otLogInfoMqttsn("Pingreq message retransmission");
+    MqttsnClient* client = static_cast<MqttsnClient*>(aContext);
+    Message* retransmissionMessage = aMessage.Clone(aMessage.GetLength());
+    if (retransmissionMessage != NULL)
+    {
+        client->SendMessage(*retransmissionMessage, aAddress, aPort);
+    }
+    client->ResetPingreqTime();
 }
 
 }

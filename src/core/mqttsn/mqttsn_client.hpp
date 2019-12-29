@@ -964,6 +964,7 @@ protected:
     bool VerifyGatewayAddress(const Ip6::MessageInfo &aMessageInfo);
 
 private:
+    void ResetPingreqTime(void);
     void ConnackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void SubackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void PublishReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
