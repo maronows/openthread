@@ -912,6 +912,22 @@ protected:
     otError SendMessage(Message &aMessage);
 
     /**
+     * Send OT message to configured gateway address and queue message to retransmission on timeout.
+     *
+     * @param[in]  aMessage    A reference to message instance.
+     * @param[in]  aQueue      A waiting messages queue where will be message enqueued to retransmission on timeout.
+     * @param[in]  aMessageId  MQTT-SN Message ID. Or zero if the message does not contain ID.
+     * @param[in]  aCallback   A function pointer for handling message timeout.
+     * @param[in]  aContext    A pointer to callback passed to timeout callback.
+     *
+     * @retval OT_ERROR_NONE      Message successfully enqueued.
+     * @retval OT_ERROR_NO_BUFS   Insufficient available buffers to enqueue message.
+     *
+     */
+    template <typename CallbackType>
+    otError SendMessageWithRetransmission(Message &aMessage, WaitingMessagesQueue<CallbackType> &aQueue, uint16_t aMessageId, CallbackType aCallback, void* aContext);
+
+    /**
      * Send OT message to specific gateway address.
      *
      * @param[in]  aMessage  A reference to message instance.
@@ -964,6 +980,7 @@ protected:
     bool VerifyGatewayAddress(const Ip6::MessageInfo &aMessageInfo);
 
 private:
+    uint16_t GetNextMessageId(void);
     void ResetPingreqTime(void);
     void ConnackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void SubackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
@@ -1007,10 +1024,9 @@ private:
     static void HandlePingreqTimeout(const MessageMetadata<void*> &aMetadata, void* aContext);
 
     static void HandleMessageRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
-
     static void HandlePublishRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
-
     static void HandleSubscribeRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
+    static void HandlePingreqRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
 
     Ip6::UdpSocket mSocket;
     MqttsnConfig mConfig;
