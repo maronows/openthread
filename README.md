@@ -209,7 +209,7 @@ See more information about `publish` command in [CLI reference](src/cli/README_M
 [include/openthread/mqttsn.h](include/openthread/mqttsn.h)<br>
 [src/core/api/mqttsn_api.cpp](src/core/api/mqttsn_api.cpp)<br>
 [src/cli/cli_mqtt.cpp](src/cli/cli_mqtt.cpp)<br>
-[src/cli/cli_mqtt.hpp](src/cli/cli_mqtt.hpp)
+[src/cli/cli_mqtt.hpp](src/cli/cli_mqtt.hpp)<br>
 [tests/unit/test_mqttsn.cpp](tests/unit/test_mqttsn.cpp)
 
 ## Code samples
