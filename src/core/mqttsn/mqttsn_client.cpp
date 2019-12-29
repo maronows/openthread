@@ -1122,18 +1122,21 @@ otError MqttsnClient::Process()
     SuccessOrExit(error = mActiveGateways.HandleTimer());
 
 exit:
-    // Handle timeout
-    if (mTimeoutRaised && mClientState == kStateActive)
+    // Handle communication timeout
+    // Transition from Active or Asleep to Lost state defined in MQTT-SN 1.2 state diagram
+    // In other case the timeout is ignored
+    if (mTimeoutRaised && (mClientState == kStateActive || mClientState == kStateAsleep))
     {
-        mClientState = kStateLost;
+        mClientState = mDisconnectRequested ? kStateDisconnected : kStateLost;
         OnDisconnected();
         if (mDisconnectedCallback)
         {
             mDisconnectedCallback(kDisconnectTimeout, mDisconnectedContext);
         }
     }
-    // Only enqueue process when client connected
-    if (mClientState != kStateDisconnected && mClientState != kStateLost)
+    mTimeoutRaised = false;
+    // Only enqueue process when client running
+    if (mIsRunning)
     {
         mProcessTask.Post();
     }
