@@ -37,18 +37,23 @@
 
 #include "common/instance.hpp"
 #include "common/locator-getters.hpp"
+#include "meshcop/dataset_manager.hpp"
 
 using namespace ot;
 
 bool otDatasetIsCommissioned(otInstance *aInstance)
 {
     otOperationalDataset dataset;
+    bool                 rval = false;
 
-    otDatasetGetActive(aInstance, &dataset);
+    SuccessOrExit(otDatasetGetActive(aInstance, &dataset));
 
-    return ((dataset.mComponents.mIsMasterKeyPresent) && (dataset.mComponents.mIsNetworkNamePresent) &&
+    rval = ((dataset.mComponents.mIsMasterKeyPresent) && (dataset.mComponents.mIsNetworkNamePresent) &&
             (dataset.mComponents.mIsExtendedPanIdPresent) && (dataset.mComponents.mIsPanIdPresent) &&
             (dataset.mComponents.mIsChannelPresent));
+
+exit:
+    return rval;
 }
 
 otError otDatasetGetActive(otInstance *aInstance, otOperationalDataset *aDataset)

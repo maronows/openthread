@@ -192,15 +192,13 @@ void platformAlarmAdvanceNow(uint64_t aDelta);
 /**
  * This function initializes the radio service used by OpenThread.
  *
- * @note Even when @p aReset is false, a reset event (i.e. a PROP_LAST_STATUS between
+ * @note Even when @p aPlatformConfig->mResetRadio is false, a reset event (i.e. a PROP_LAST_STATUS between
  * [SPINEL_STATUS_RESET__BEGIN, SPINEL_STATUS_RESET__END]) is still expected from RCP.
  *
- * @param[in]  aRadioFile       A pointer to the radio file.
- * @param[in]  aRadioConfig     A pointer to the radio config.
- * @param[in]  aReset           Whether to reset RCP when initializing.
+ * @param[in]  aPlatformConfig  Platform configuration structure.
  *
  */
-void platformRadioInit(const char *aRadioFile, const char *aRadioConfig, bool aReset);
+void platformRadioInit(const otPlatformConfig *aPlatformConfig);
 
 /**
  * This function shuts down the radio service used by OpenThread.
@@ -368,15 +366,6 @@ void platformSimReceiveEvent(struct Event *aEvent);
  *
  */
 void platformSimSendSleepEvent(const struct timeval *aTimeout);
-
-/**
- * This function updates the file descriptor sets with file descriptors
- * used by radio spinel of virtual time simulation.
- *
- * @param[out]   aTimeout    A pointer to the timeout event to be updated.
- *
- */
-void platformSimRadioSpinelUpdate(struct timeval *atimeout);
 
 /**
  * This function performs radio spinel processing of virtual time simulation.

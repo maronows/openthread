@@ -42,6 +42,7 @@
 #include <openthread/icmp6.h>
 #include <openthread/link.h>
 #include <openthread/ncp.h>
+#include <openthread/netdata.h>
 #include <openthread/thread.h>
 #if OPENTHREAD_CONFIG_TIME_SYNC_ENABLE
 #include <openthread/network_time.h>
@@ -170,9 +171,7 @@ const struct Command Interpreter::sCommands[] = {
 #if OPENTHREAD_CONFIG_BORDER_ROUTER_ENABLE || OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
     {"netdataregister", &Interpreter::ProcessNetworkDataRegister},
 #endif
-#if OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
     {"netdatashow", &Interpreter::ProcessNetworkDataShow},
-#endif
 #if OPENTHREAD_FTD || OPENTHREAD_CONFIG_TMF_NETWORK_DIAG_MTD_ENABLE
     {"networkdiagnostic", &Interpreter::ProcessNetworkDiagnostic},
 #endif // OPENTHREAD_FTD || OPENTHREAD_CONFIG_TMF_NETWORK_DIAG_MTD_ENABLE
@@ -206,7 +205,7 @@ const struct Command Interpreter::sCommands[] = {
 #if OPENTHREAD_FTD
     {"router", &Interpreter::ProcessRouter},
     {"routerdowngradethreshold", &Interpreter::ProcessRouterDowngradeThreshold},
-    {"routerrole", &Interpreter::ProcessRouterRole},
+    {"routereligible", &Interpreter::ProcessRouterEligible},
     {"routerselectionjitter", &Interpreter::ProcessRouterSelectionJitter},
     {"routerupgradethreshold", &Interpreter::ProcessRouterUpgradeThreshold},
 #endif
@@ -898,9 +897,9 @@ void Interpreter::ProcessCounters(int argc, char *argv[])
         mServer->OutputFormat("mac\r\n");
         mServer->OutputFormat("mle\r\n");
     }
-    else if (argc == 1)
+    else if (strcmp(argv[0], "mac") == 0)
     {
-        if (strcmp(argv[0], "mac") == 0)
+        if (argc == 1)
         {
             const otMacCounters *macCounters = otLinkGetCounters(mInstance);
 
@@ -936,7 +935,18 @@ void Interpreter::ProcessCounters(int argc, char *argv[])
             mServer->OutputFormat("    RxErrFcs: %d\r\n", macCounters->mRxErrFcs);
             mServer->OutputFormat("    RxErrOther: %d\r\n", macCounters->mRxErrOther);
         }
-        else if (strcmp(argv[0], "mle") == 0)
+        else if ((argc == 2) && (strcmp(argv[0], "reset") == 0))
+        {
+            otLinkResetCounters(mInstance);
+        }
+        else
+        {
+            ExitNow(error = OT_ERROR_INVALID_ARGS);
+        }
+    }
+    else if (strcmp(argv[0], "mle") == 0)
+    {
+        if (argc == 1)
         {
             const otMleCounters *mleCounters = otThreadGetMleCounters(mInstance);
 
@@ -950,6 +960,10 @@ void Interpreter::ProcessCounters(int argc, char *argv[])
             mServer->OutputFormat("Better Partition Attach Attempts: %d\r\n",
                                   mleCounters->mBetterPartitionAttachAttempts);
             mServer->OutputFormat("Parent Changes: %d\r\n", mleCounters->mParentChanges);
+        }
+        else if ((argc == 2) && (strcmp(argv[0], "reset") == 0))
+        {
+            otThreadResetMleCounters(mInstance);
         }
         else
         {
@@ -1070,23 +1084,26 @@ exit:
     }
 }
 
-void Interpreter::HandleDnsResponse(void *        aContext,
-                                    const char *  aHostname,
-                                    otIp6Address *aAddress,
-                                    uint32_t      aTtl,
-                                    otError       aResult)
+void Interpreter::HandleDnsResponse(void *              aContext,
+                                    const char *        aHostname,
+                                    const otIp6Address *aAddress,
+                                    uint32_t            aTtl,
+                                    otError             aResult)
 {
-    static_cast<Interpreter *>(aContext)->HandleDnsResponse(aHostname, *static_cast<Ip6::Address *>(aAddress), aTtl,
-                                                            aResult);
+    static_cast<Interpreter *>(aContext)->HandleDnsResponse(aHostname, static_cast<const Ip6::Address *>(aAddress),
+                                                            aTtl, aResult);
 }
 
-void Interpreter::HandleDnsResponse(const char *aHostname, Ip6::Address &aAddress, uint32_t aTtl, otError aResult)
+void Interpreter::HandleDnsResponse(const char *aHostname, const Ip6::Address *aAddress, uint32_t aTtl, otError aResult)
 {
     mServer->OutputFormat("DNS response for %s - ", aHostname);
 
     if (aResult == OT_ERROR_NONE)
     {
-        OutputIp6Address(aAddress);
+        if (aAddress != NULL)
+        {
+            OutputIp6Address(*aAddress);
+        }
         mServer->OutputFormat(" TTL: %d\r\n", aTtl);
     }
     else
@@ -1723,7 +1740,6 @@ exit:
 }
 #endif
 
-#if OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
 void Interpreter::ProcessNetworkDataShow(int argc, char *argv[])
 {
     OT_UNUSED_VARIABLE(argc);
@@ -1742,6 +1758,7 @@ exit:
     AppendResult(error);
 }
 
+#if OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
 void Interpreter::ProcessService(int argc, char *argv[])
 {
     otError error = OT_ERROR_NONE;
@@ -2034,6 +2051,7 @@ void Interpreter::ProcessPing(int argc, char *argv[])
 
     VerifyOrExit(!mPingTimer.IsRunning(), error = OT_ERROR_BUSY);
 
+    mMessageInfo = Ip6::MessageInfo();
     SuccessOrExit(error = mMessageInfo.GetPeerAddr().FromString(argv[0]));
 
     mLength   = 8;
@@ -2058,6 +2076,16 @@ void Interpreter::ProcessPing(int argc, char *argv[])
             SuccessOrExit(error = ParsePingInterval(argv[index], interval));
             VerifyOrExit(0 < interval && interval <= Timer::kMaxDelay, error = OT_ERROR_INVALID_ARGS);
             mInterval = interval;
+            break;
+
+        case 4:
+            SuccessOrExit(error = ParseLong(argv[index], value));
+            VerifyOrExit(0 <= value && value <= 255, error = OT_ERROR_INVALID_ARGS);
+            mMessageInfo.mHopLimit = static_cast<uint8_t>(value);
+            if (value == 0)
+            {
+                mMessageInfo.mAllowZeroHopLimit = true;
+            }
             break;
 
         default:
@@ -2761,13 +2789,13 @@ exit:
     AppendResult(error);
 }
 
-void Interpreter::ProcessRouterRole(int argc, char *argv[])
+void Interpreter::ProcessRouterEligible(int argc, char *argv[])
 {
     otError error = OT_ERROR_NONE;
 
     if (argc == 0)
     {
-        if (otThreadIsRouterRoleEnabled(mInstance))
+        if (otThreadIsRouterEligible(mInstance))
         {
             mServer->OutputFormat("Enabled\r\n");
         }
@@ -2778,11 +2806,11 @@ void Interpreter::ProcessRouterRole(int argc, char *argv[])
     }
     else if (strcmp(argv[0], "enable") == 0)
     {
-        otThreadSetRouterRoleEnabled(mInstance, true);
+        error = otThreadSetRouterEligible(mInstance, true);
     }
     else if (strcmp(argv[0], "disable") == 0)
     {
-        otThreadSetRouterRoleEnabled(mInstance, false);
+        error = otThreadSetRouterEligible(mInstance, false);
     }
     else
     {

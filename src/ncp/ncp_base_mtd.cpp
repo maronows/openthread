@@ -230,27 +230,6 @@ exit:
     return error;
 }
 
-template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_PHY_FREQ>(void)
-{
-    uint32_t      freq_khz(0);
-    const uint8_t chan(otLinkGetChannel(mInstance));
-
-    if (chan == 0)
-    {
-        freq_khz = 868300;
-    }
-    else if (chan < 11)
-    {
-        freq_khz = 906000 - (2000 * 1) + 2000 * (chan);
-    }
-    else if (chan < 26)
-    {
-        freq_khz = 2405000 - (5000 * 11) + 5000 * (chan);
-    }
-
-    return mEncoder.WriteUint32(freq_khz);
-}
-
 template <> otError NcpBase::HandlePropertySet<SPINEL_PROP_PHY_CHAN_SUPPORTED>(void)
 {
     uint32_t newMask = 0;
@@ -631,8 +610,6 @@ exit:
     return error;
 }
 
-#if OPENTHREAD_CONFIG_ENABLE_TX_ERROR_RATE_TRACKING
-
 template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_NEIGHBOR_TABLE_ERROR_RATES>(void)
 {
     otError                error = OT_ERROR_NONE;
@@ -656,8 +633,6 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_NEIGHBOR_TABLE
 exit:
     return error;
 }
-
-#endif // OPENTHREAD_CONFIG_ENABLE_TX_ERROR_RATE_TRACKING
 
 template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_ASSISTING_PORTS>(void)
 {
@@ -950,6 +925,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_SERVER_SERVICES>(void
 exit:
     return error;
 }
+#endif // OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
 
 template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_SERVER_LEADER_SERVICES>(void)
 {
@@ -957,7 +933,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_SERVER_LEADER_SERVICE
     otNetworkDataIterator iterator = OT_NETWORK_DATA_ITERATOR_INIT;
     otServiceConfig       cfg;
 
-    while (otServerGetNextLeaderService(mInstance, &iterator, &cfg) == OT_ERROR_NONE)
+    while (otNetDataGetNextService(mInstance, &iterator, &cfg) == OT_ERROR_NONE)
     {
         SuccessOrExit(error = mEncoder.OpenStruct());
 
@@ -974,8 +950,6 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_SERVER_LEADER_SERVICE
 exit:
     return error;
 }
-
-#endif // OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
 
 template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_DISCOVERY_SCAN_JOINER_FLAG>(void)
 {
@@ -2467,6 +2441,8 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_CNTR_ALL_MAC_COUNTERS
     SuccessOrExit(error = mEncoder.WriteUint32(counters->mTxErrCca));
     SuccessOrExit(error = mEncoder.WriteUint32(counters->mTxErrAbort));
     SuccessOrExit(error = mEncoder.WriteUint32(counters->mTxErrBusyChannel));
+    SuccessOrExit(error = mEncoder.WriteUint32(counters->mTxDirectMaxRetryExpiry));
+    SuccessOrExit(error = mEncoder.WriteUint32(counters->mTxIndirectMaxRetryExpiry));
     SuccessOrExit(error = mEncoder.CloseStruct());
 
     // Encode Rx related counters
@@ -2551,6 +2527,49 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_CNTR_ALL_IP_COUNTERS>
 exit:
     return error;
 }
+
+#if OPENTHREAD_CONFIG_MAC_RETRY_SUCCESS_HISTOGRAM_ENABLE
+template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_CNTR_MAC_RETRY_HISTOGRAM>(void)
+{
+    otError         error = OT_ERROR_NONE;
+    const uint32_t *histogramDirect;
+    const uint32_t *histogramIndirect;
+    uint8_t         histogramDirectEntries;
+    uint8_t         histogramIndirectEntries;
+
+    histogramDirect   = otLinkGetTxDirectRetrySuccessHistogram(mInstance, &histogramDirectEntries);
+    histogramIndirect = otLinkGetTxIndirectRetrySuccessHistogram(mInstance, &histogramIndirectEntries);
+
+    assert((histogramDirectEntries == 0) || (histogramDirect != NULL));
+    assert((histogramIndirectEntries == 0) || (histogramIndirect != NULL));
+
+    // Encode direct message retries histogram
+    SuccessOrExit(error = mEncoder.OpenStruct());
+    for (uint8_t i = 0; i < histogramDirectEntries; i++)
+    {
+        SuccessOrExit(error = mEncoder.WriteUint32(histogramDirect[i]));
+    }
+    SuccessOrExit(error = mEncoder.CloseStruct());
+
+    // Encode indirect message retries histogram
+    SuccessOrExit(error = mEncoder.OpenStruct());
+    for (uint8_t i = 0; i < histogramIndirectEntries; i++)
+    {
+        SuccessOrExit(error = mEncoder.WriteUint32(histogramIndirect[i]));
+    }
+    SuccessOrExit(error = mEncoder.CloseStruct());
+
+exit:
+    return error;
+}
+
+template <> otError NcpBase::HandlePropertySet<SPINEL_PROP_CNTR_MAC_RETRY_HISTOGRAM>(void)
+{
+    otLinkResetTxRetrySuccessHistogram(mInstance);
+
+    return OT_ERROR_NONE;
+}
+#endif // OPENTHREAD_CONFIG_MAC_RETRY_SUCCESS_HISTOGRAM_ENABLE
 
 template <> otError NcpBase::HandlePropertySet<SPINEL_PROP_CNTR_ALL_IP_COUNTERS>(void)
 {
@@ -2922,6 +2941,9 @@ exit:
 template <> otError NcpBase::HandlePropertySet<SPINEL_PROP_CNTR_RESET>(void)
 {
     otLinkResetCounters(mInstance);
+#if OPENTHREAD_CONFIG_MAC_RETRY_SUCCESS_HISTOGRAM_ENABLE
+    otLinkResetTxRetrySuccessHistogram(mInstance);
+#endif
     otThreadResetIp6Counters(mInstance);
     otThreadResetMleCounters(mInstance);
     ResetCounters();

@@ -607,7 +607,10 @@ otError PingreqMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLengt
     {
         return OT_ERROR_FAILED;
     }
-    SuccessOrExit(error = mClientId.Set("%.*s", clientId.lenstring.len, clientId.lenstring.data));
+    if (clientId.lenstring.data != NULL)
+    {
+        SuccessOrExit(error = mClientId.Set("%.*s", clientId.lenstring.len, clientId.lenstring.data));
+    }
 
 exit:
     return error;

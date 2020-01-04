@@ -29,6 +29,7 @@
 #ifndef MQTTSN_CLIENT_HPP_
 #define MQTTSN_CLIENT_HPP_
 
+#include "mqttsn/mqttsn_gateway_list.hpp"
 #include "common/locator.hpp"
 #include "common/tasklet.hpp"
 #include "net/ip6_address.hpp"
@@ -42,7 +43,24 @@
  */
 
 namespace ot {
+
+/**
+ * @namespace ot::Mqttsn
+ * @brief
+ *   This namespace includes definitions for MQTT-SN.
+ *
+ */
 namespace Mqttsn {
+
+/**
+ * @addtogroup core-mqttsn
+ *
+ * @brief
+ *   This module includes definitions for MQTT-SN.
+ *
+ * @{
+ *
+ */
 
 /**
  * MQTT-SN message return code.
@@ -792,7 +810,15 @@ public:
      * @returns Current client state.
      *
      */
-    ClientState GetState(void);
+    ClientState GetState(void) const;
+
+    /**
+     * Get list of active MQTT-SN gateways. Gateways are periodically advertised
+     * or obtained with gwinfo message.
+     *
+     * @returns A reference to list with active gateways information.
+     */
+    const StaticArrayList<GatewayInfo> &GetActiveGateways(void) const;
 
     /**
      * Set callback function invoked when connection acknowledged or timed out.
@@ -886,6 +912,22 @@ protected:
     otError SendMessage(Message &aMessage);
 
     /**
+     * Send OT message to configured gateway address and queue message to retransmission on timeout.
+     *
+     * @param[in]  aMessage    A reference to message instance.
+     * @param[in]  aQueue      A waiting messages queue where will be message enqueued to retransmission on timeout.
+     * @param[in]  aMessageId  MQTT-SN Message ID. Or zero if the message does not contain ID.
+     * @param[in]  aCallback   A function pointer for handling message timeout.
+     * @param[in]  aContext    A pointer to callback passed to timeout callback.
+     *
+     * @retval OT_ERROR_NONE      Message successfully enqueued.
+     * @retval OT_ERROR_NO_BUFS   Insufficient available buffers to enqueue message.
+     *
+     */
+    template <typename CallbackType>
+    otError SendMessageWithRetransmission(Message &aMessage, WaitingMessagesQueue<CallbackType> &aQueue, uint16_t aMessageId, CallbackType aCallback, void* aContext);
+
+    /**
      * Send OT message to specific gateway address.
      *
      * @param[in]  aMessage  A reference to message instance.
@@ -938,6 +980,8 @@ protected:
     bool VerifyGatewayAddress(const Ip6::MessageInfo &aMessageInfo);
 
 private:
+    uint16_t GetNextMessageId(void);
+    void ResetPingreqTime(void);
     void ConnackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void SubackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void PublishReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
@@ -953,6 +997,7 @@ private:
     void PingreqReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void PingrespReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void DisconnectReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
+    void SearchGwReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
 
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
 
@@ -979,10 +1024,9 @@ private:
     static void HandlePingreqTimeout(const MessageMetadata<void*> &aMetadata, void* aContext);
 
     static void HandleMessageRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
-
     static void HandlePublishRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
-
     static void HandleSubscribeRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
+    static void HandlePingreqRetransmission(const Message &aMessage, const Ip6::Address &aAddress, uint16_t aPort, void* aContext);
 
     Ip6::UdpSocket mSocket;
     MqttsnConfig mConfig;
@@ -993,6 +1037,7 @@ private:
     bool mTimeoutRaised;
     ClientState mClientState;
     bool mIsRunning;
+    ActiveGatewayList mActiveGateways;
     Tasklet mProcessTask;
     WaitingMessagesQueue<otMqttsnSubscribedHandler> mSubscribeQueue;
     WaitingMessagesQueue<otMqttsnRegisteredHandler> mRegisterQueue;
@@ -1018,7 +1063,12 @@ private:
     void* mRegisterReceivedContext;
 };
 
-}
-}
+/**
+ * @}
+ *
+ */
+
+} // namespace Mqttsn
+} // namespace ot
 
 #endif /* MQTTSN_CLIENT_HPP_ */

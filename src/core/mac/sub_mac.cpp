@@ -61,7 +61,7 @@ SubMac::SubMac(Instance &aInstance)
     , mPcapCallbackContext(NULL)
     , mTimer(aInstance, &SubMac::HandleTimer, this)
 {
-    memset(mExtAddress.m8, 0, sizeof(mExtAddress));
+    mExtAddress.Clear();
 }
 
 otRadioCaps SubMac::GetCaps(void) const
@@ -370,11 +370,10 @@ void SubMac::HandleTransmitDone(TxFrame &aFrame, RxFrame *aAckFrame, otError aEr
     if (shouldRetx)
     {
         mTransmitRetries++;
+        aFrame.SetIsARetransmission(true);
         StartCsmaBackoff();
         ExitNow();
     }
-
-    mTransmitRetries = 0;
 
     SetState(kStateReceive);
 

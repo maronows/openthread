@@ -198,3 +198,15 @@ Send searchgw multicast message. If there is any MQTT-SN gateway listening in th
 Done
 searchgw response from 2018:ff9b:0:0:0:0:ac12:8: gateway_id=1
 ```
+
+If gateway is in the network behind border router forwarding for broadcast must be set.
+
+### gateways
+
+Get of active MQTT-SN gateways cached in the client. Gateways are periodically advertised or obtained with gwinfo message.
+
+```bash
+> mqtt gateways
+gateway fd11:22:0:0:6648:fb52:b05:43f5: gateway_id=1
+Done
+```

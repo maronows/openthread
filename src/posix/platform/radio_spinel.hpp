@@ -37,13 +37,14 @@
 #include <openthread/platform/radio.h>
 
 #include "hdlc_interface.hpp"
+#include "spinel_interface.hpp"
 #include "ncp/ncp_config.h"
 #include "ncp/spinel.h"
 
 namespace ot {
 namespace PosixApp {
 
-class RadioSpinel : public HdlcInterface::Callbacks
+class RadioSpinel : public SpinelInterface::Callbacks
 {
 public:
     /**
@@ -55,12 +56,10 @@ public:
     /**
      * Initialize this radio transceiver.
      *
-     * @param[in]   aRadioFile    The path to either a uart device or an executable.
-     * @param[in]   aRadioConfig  Parameters given to the device or executable.
-     * @param[in]   aReset        Whether to reset RCP when initializing.
+     * @param[in]  aPlatformConfig  Platform configuration structure.
      *
      */
-    void Init(const char *aRadioFile, const char *aRadioConfig, bool aReset);
+    void Init(const otPlatformConfig &aPlatformConfig);
 
     /**
      * Deinitialize this radio transceiver.
@@ -513,11 +512,12 @@ public:
     uint32_t GetRadioChannelMask(bool aPreferred);
 
     /**
-     *  This method processes a received Spinel frame.
+     * This method processes a received Spinel frame.
      *
-     * @param[in] aFrameBuffer The frame buffer constaining the newly received frame.
+     * The newly received frame is available in `RxFrameBuffer` from `SpinelInterface::GetRxFrameBuffer()`.
+     *
      */
-    void HandleSpinelFrame(HdlcInterface::RxFrameBuffer &aFrameBuffer);
+    void HandleReceivedFrame(void);
 
 private:
     enum
@@ -531,12 +531,11 @@ private:
 
     enum State
     {
-        kStateDisabled,        ///< Radio is disabled.
-        kStateSleep,           ///< Radio is sleep.
-        kStateReceive,         ///< Radio is in receive mode.
-        kStateTransmitPending, ///< Frame transmission requested, waiting to pass frame to radio.
-        kStateTransmitting,    ///< Frame passed to radio for transmission, waiting for done event from radio.
-        kStateTransmitDone,    ///< Radio indicated frame transmission is done.
+        kStateDisabled,     ///< Radio is disabled.
+        kStateSleep,        ///< Radio is sleep.
+        kStateReceive,      ///< Radio is in receive mode.
+        kStateTransmitting, ///< Frame passed to radio for transmission, waiting for done event from radio.
+        kStateTransmitDone, ///< Radio indicated frame transmission is done.
     };
 
     otError CheckSpinelVersion(void);
@@ -627,8 +626,7 @@ private:
      */
     bool IsSafeToHandleNow(spinel_prop_key_t aKey) const
     {
-        return !((mHdlcInterface.IsDecoding() || mWaitingKey != SPINEL_PROP_LAST_STATUS) &&
-                 (aKey == SPINEL_PROP_STREAM_RAW || aKey == SPINEL_PROP_MAC_ENERGY_SCAN_RESULT));
+        return !(aKey == SPINEL_PROP_STREAM_RAW || aKey == SPINEL_PROP_MAC_ENERGY_SCAN_RESULT);
     }
 
     void HandleNotification(HdlcInterface::RxFrameBuffer &aFrameBuffer);
@@ -640,7 +638,8 @@ private:
     void HandleWaitingResponse(uint32_t aCommand, spinel_prop_key_t aKey, const uint8_t *aBuffer, uint16_t aLength);
 
     void RadioReceive(void);
-    void RadioTransmit(void);
+
+    void TransmitDone(otRadioFrame *aFrame, otRadioFrame *aAckFrame, otError aError);
 
     otInstance *mInstance;
 

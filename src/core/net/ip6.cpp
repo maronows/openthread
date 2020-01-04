@@ -174,7 +174,7 @@ uint16_t Ip6::UpdateChecksum(uint16_t aChecksum, const Address &aAddress)
 uint16_t Ip6::ComputePseudoheaderChecksum(const Address &aSource,
                                           const Address &aDestination,
                                           uint16_t       aLength,
-                                          IpProto        aProto)
+                                          uint8_t        aProto)
 {
     uint16_t checksum;
 
@@ -227,7 +227,7 @@ otError Ip6::AddTunneledMplOption(Message &aMessage, Header &aHeader, MessageInf
     MessageInfo                messageInfo(aMessageInfo);
 
     // Use IP-in-IP encapsulation (RFC2473) and ALL_MPL_FORWARDERS address.
-    memset(&messageInfo.GetPeerAddr(), 0, sizeof(Address));
+    messageInfo.GetPeerAddr().Clear();
     messageInfo.GetPeerAddr().mFields.m16[0] = HostSwap16(0xff03);
     messageInfo.GetPeerAddr().mFields.m16[7] = HostSwap16(0x00fc);
 
@@ -448,7 +448,7 @@ void Ip6::EnqueueDatagram(Message &aMessage)
     mSendQueueTask.Post();
 }
 
-otError Ip6::SendDatagram(Message &aMessage, MessageInfo &aMessageInfo, IpProto aIpProto)
+otError Ip6::SendDatagram(Message &aMessage, MessageInfo &aMessageInfo, uint8_t aIpProto)
 {
     otError                    error = OT_ERROR_NONE;
     Header                     header;
@@ -460,7 +460,15 @@ otError Ip6::SendDatagram(Message &aMessage, MessageInfo &aMessageInfo, IpProto 
     header.SetDscp(PriorityToDscp(aMessage.GetPriority()));
     header.SetPayloadLength(payloadLength);
     header.SetNextHeader(aIpProto);
-    header.SetHopLimit(aMessageInfo.mHopLimit ? aMessageInfo.mHopLimit : static_cast<uint8_t>(kDefaultHopLimit));
+
+    if (aMessageInfo.GetHopLimit() != 0 || aMessageInfo.ShouldAllowZeroHopLimit())
+    {
+        header.SetHopLimit(aMessageInfo.GetHopLimit());
+    }
+    else
+    {
+        header.SetHopLimit(static_cast<uint8_t>(kDefaultHopLimit));
+    }
 
     if (aMessageInfo.GetSockAddr().IsUnspecified() || aMessageInfo.GetSockAddr().IsMulticast())
     {
@@ -615,7 +623,7 @@ exit:
 }
 
 #if OPENTHREAD_CONFIG_IP6_FRAGMENTATION_ENABLE
-otError Ip6::FragmentDatagram(Message &aMessage, IpProto aIpProto)
+otError Ip6::FragmentDatagram(Message &aMessage, uint8_t aIpProto)
 {
     otError        error = OT_ERROR_NONE;
     Header         header;
@@ -793,7 +801,7 @@ otError Ip6::HandleFragment(Message &aMessage, Netif *aNetif, MessageInfo &aMess
         // creates the header for the reassembled ipv6 package
         VerifyOrExit(aMessage.Read(0, sizeof(header), &header) == sizeof(header), error = OT_ERROR_PARSE);
         header.SetPayloadLength(message->GetLength() - sizeof(header));
-        header.SetNextHeader(static_cast<IpProto>(fragmentHeader.GetNextHeader()));
+        header.SetNextHeader(fragmentHeader.GetNextHeader());
         assertValue = message->Write(0, sizeof(header), &header);
         assert(assertValue == sizeof(header));
 
@@ -893,7 +901,7 @@ exit:
 }
 
 #else
-otError Ip6::FragmentDatagram(Message &aMessage, IpProto aIpProto)
+otError Ip6::FragmentDatagram(Message &aMessage, uint8_t aIpProto)
 {
     OT_UNUSED_VARIABLE(aIpProto);
 
@@ -1298,25 +1306,33 @@ exit:
 
 const NetifUnicastAddress *Ip6::SelectSourceAddress(MessageInfo &aMessageInfo)
 {
-    Address *                  destination = &aMessageInfo.GetPeerAddr();
-    const NetifUnicastAddress *rvalAddr    = NULL;
-    const Address *            candidateAddr;
-    uint8_t                    rvalPrefixMatched = 0;
+    Address *                  destination       = &aMessageInfo.GetPeerAddr();
     uint8_t                    destinationScope  = destination->GetScope();
+    const NetifUnicastAddress *rvalAddr          = NULL;
+    uint8_t                    rvalPrefixMatched = 0;
 
     for (const NetifUnicastAddress *addr = Get<ThreadNetif>().GetUnicastAddresses(); addr; addr = addr->GetNext())
     {
-        uint8_t overrideScope;
-        uint8_t candidatePrefixMatched;
-
-        candidateAddr          = &addr->GetAddress();
-        candidatePrefixMatched = destination->PrefixMatch(*candidateAddr);
-        overrideScope          = (candidatePrefixMatched >= addr->mPrefixLength) ? addr->GetScope() : destinationScope;
+        const Address *candidateAddr = &addr->GetAddress();
+        uint8_t        candidatePrefixMatched;
+        uint8_t        overrideScope;
 
         if (candidateAddr->IsAnycastRoutingLocator())
         {
             // Don't use anycast address as source address.
             continue;
+        }
+
+        candidatePrefixMatched = destination->PrefixMatch(*candidateAddr);
+
+        if (candidatePrefixMatched >= addr->mPrefixLength)
+        {
+            candidatePrefixMatched = addr->mPrefixLength;
+            overrideScope          = addr->GetScope();
+        }
+        else
+        {
+            overrideScope = destinationScope;
         }
 
         if (rvalAddr == NULL)
@@ -1356,19 +1372,6 @@ const NetifUnicastAddress *Ip6::SelectSourceAddress(MessageInfo &aMessageInfo)
                 continue;
             }
         }
-        else if ((rvalAddr->GetScope() == Address::kRealmLocalScope) && (addr->GetScope() == Address::kRealmLocalScope))
-        {
-            // Additional rule: Prefer EID
-            if (rvalAddr->GetAddress().IsRoutingLocator())
-            {
-                rvalAddr          = addr;
-                rvalPrefixMatched = candidatePrefixMatched;
-            }
-            else
-            {
-                continue;
-            }
-        }
         else if (addr->mPreferred && !rvalAddr->mPreferred)
         {
             // Rule 3: Avoid deprecated addresses
@@ -1380,6 +1383,13 @@ const NetifUnicastAddress *Ip6::SelectSourceAddress(MessageInfo &aMessageInfo)
             // Rule 6: Prefer matching label
             // Rule 7: Prefer public address
             // Rule 8: Use longest prefix matching
+            rvalAddr          = addr;
+            rvalPrefixMatched = candidatePrefixMatched;
+        }
+        else if ((candidatePrefixMatched == rvalPrefixMatched) &&
+                 (destination->IsRoutingLocator() == candidateAddr->IsRoutingLocator()))
+        {
+            // Additional rule: Prefer RLOC source for RLOC destination, EID source for anything else
             rvalAddr          = addr;
             rvalPrefixMatched = candidatePrefixMatched;
         }
@@ -1417,7 +1427,7 @@ exit:
 
 // LCOV_EXCL_START
 
-const char *Ip6::IpProtoToString(IpProto aIpProto)
+const char *Ip6::IpProtoToString(uint8_t aIpProto)
 {
     const char *retval;
 

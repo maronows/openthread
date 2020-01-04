@@ -42,7 +42,23 @@
 
 namespace ot {
 
+/**
+ * @namespace ot::Mqttsn
+ * @brief
+ *   This namespace includes definitions for MQTT-SN.
+ *
+ */
 namespace Mqttsn {
+
+/**
+ * @addtogroup core-mqttsn
+ *
+ * @brief
+ *   This module includes definitions for MQTT-SN.
+ *
+ * @{
+ *
+ */
 
 enum MessageType
 {
@@ -92,10 +108,6 @@ public:
     MessageType GetMessageType() { return mMessageType; };
 
     void SetMessageType(MessageType aMessageType) { mMessageType = aMessageType; };
-
-    virtual otError Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const = 0;
-
-    virtual otError Deserialize(const uint8_t* aBuffer, int32_t aBufferLength) = 0;
 
     static otError DeserializeMessageType(const uint8_t* aBuffer, int32_t aBufferLength, MessageType* aMessageType);
 
@@ -862,8 +874,12 @@ private:
     uint16_t mDuration;
 };
 
-}
+/**
+ * @}
+ *
+ */
 
-}
+} // namespace Mqttsn
+} // namespace ot
 
 #endif /* MQTTSN_SERIALIZER_HPP_ */

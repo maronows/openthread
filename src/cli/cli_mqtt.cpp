@@ -44,7 +44,7 @@ const struct Mqtt::Command Mqtt::sCommands[] = {
     {"register", &Mqtt::ProcessRegister},       {"publish", &Mqtt::ProcessPublish},
     {"unsubscribe", &Mqtt::ProcessUnsubscribe}, {"disconnect", &Mqtt::ProcessDisconnect},
     {"sleep", &Mqtt::ProcessSleep},             {"awake", &Mqtt::ProcessAwake},
-    {"searchgw", &Mqtt::ProcessSearchgw}
+    {"searchgw", &Mqtt::ProcessSearchgw},       {"gateways", &Mqtt::ProcessGateways}
 };
 
 Mqtt::Mqtt(Interpreter &aInterpreter)
@@ -290,6 +290,24 @@ otError Mqtt::ProcessSearchgw(int argc, char *argv[])
     SuccessOrExit(error = otMqttsnSearchGateway(mInterpreter.mInstance, &multicastAddress, (uint16_t)port, (uint8_t)radius));
 exit:
     return error;
+}
+
+otError Mqtt::ProcessGateways(int argc, char *argv[])
+{
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+
+    otMqttsnGatewayInfo gateways[kMaxGatewayInfoCount];
+    uint16_t gatewayCount;
+    gatewayCount = otMqttsnGetActiveGateways(mInterpreter.mInstance, gateways, sizeof(gateways));
+    for (uint16_t i = 0; i < gatewayCount; i++)
+    {
+        otMqttsnGatewayInfo &info = gateways[i];
+        mInterpreter.mServer->OutputFormat("gateway ");
+        mInterpreter.OutputIp6Address(*static_cast<Ip6::Address *>(&info.mGatewayAddress));
+        mInterpreter.mServer->OutputFormat(": gateway_id=%d\r\n", (uint32_t)info.mGatewayId);
+    }
+    return OT_ERROR_NONE;
 }
 
 void Mqtt::HandleConnected(otMqttsnReturnCode aCode, void *aContext)

@@ -46,6 +46,12 @@ DIST_SUBDIRS                            = \
 
 SUBDIRS =
 
+if OPENTHREAD_EXAMPLES_POSIX
+SUBDIRS                                += \
+    paho                                  \
+    $(NULL)
+endif
+
 if OPENTHREAD_EXAMPLES_EFR32MG12
 SUBDIRS                                += \
     silabs                                \

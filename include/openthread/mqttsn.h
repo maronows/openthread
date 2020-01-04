@@ -42,6 +42,16 @@ extern "C" {
 #define OPENTHREAD_CONFIG_MQTTSN_ENABLE 0
 #endif
 
+enum
+{
+    /**
+     * Maximum number of active gateways to be maintained. Static buffer is allocated
+     * for the gateway information.
+     *
+     */
+    kMaxGatewayInfoCount = 5
+};
+
 /**
  * MQTT-SN message return code.
  *
@@ -184,6 +194,26 @@ typedef struct otMqttsnConfig {
      */
     uint8_t mRetransmissionCount;
 } otMqttsnConfig;
+
+/**
+ * MQTT-SN gateway ID.
+ *
+ */
+typedef uint8_t otMqttsnGatewayId;
+
+/**
+ * This structure contains information about advertised MQTT-SN gateway.
+ */
+typedef struct otMqttsnGatewayInfo {
+    /**
+     * ID of the gateway.
+     */
+    otMqttsnGatewayId mGatewayId;
+    /**
+     * IPv6 address of the gateway.
+     */
+    otIp6Address mGatewayAddress;
+} otMqttsnGatewayInfo;
 
 /**
  * Declaration of function for connection callback.
@@ -581,8 +611,31 @@ otError otMqttsnAwake(otInstance *aInstance, uint32_t aTimeout);
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
-otError otMqttsnSearchGateway(otInstance *aInstance, const otIp6Address* aMulticastAddress, uint16_t aPort, uint8_t aRadius);
+otError otMqttsnSearchGateway(otInstance *aInstance, const otIp6Address *aMulticastAddress, uint16_t aPort, uint8_t aRadius);
 
+/**
+ * Get number of active gateways. Gateways are periodically advertised or obtained
+ * with gwinfo message.
+ *
+ * @param[in]  aInstance   A pointer to an OpenThread instance.
+ *
+ * @returns  Number of active gateways cached in MQTT-SN client.
+ *
+ */
+uint16_t otMqttsnGetActiveGatewaysCount(otInstance *aInstance);
+
+/**
+ * Get informations about active gateways. Gateways are periodically advertised or obtained
+ * with gwinfo message.
+ *
+ * @param[in]  aInstance    A pointer to an OpenThread instance.
+ * @param[in]  aBuffer      A pointer to statically allocated buffer for storing gateway informations.
+ * @param[in]  aBufferSize  Maximal number of items which can be stored in the buffer.
+ *
+ * @returns  Number of active gateways written in the buffer.
+ *
+ */
+uint16_t otMqttsnGetActiveGateways(otInstance *aInstance, otMqttsnGatewayInfo *aBuffer, uint16_t aBufferSize);
 
 /**
  * Set handler which is invoked when connection is acknowledged.

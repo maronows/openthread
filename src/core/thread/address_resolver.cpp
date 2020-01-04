@@ -600,7 +600,7 @@ void AddressResolver::HandleAddressError(Coap::Message &aMessage, const Ip6::Mes
     macAddr.Set(mlIidTlv.GetIid());
     macAddr.ToggleLocal();
 
-    for (ChildTable::Iterator iter(GetInstance(), ChildTable::kInStateValid); !iter.IsDone(); iter++)
+    for (ChildTable::Iterator iter(GetInstance(), Child::kInStateValid); !iter.IsDone(); iter++)
     {
         Child &child = *iter.GetChild();
 
@@ -616,7 +616,7 @@ void AddressResolver::HandleAddressError(Coap::Message &aMessage, const Ip6::Mes
 
             if (child.RemoveIp6Address(GetInstance(), targetTlv.GetTarget()) == OT_ERROR_NONE)
             {
-                memset(&destination, 0, sizeof(destination));
+                destination.Clear();
                 destination.mFields.m16[0] = HostSwap16(0xfe80);
                 destination.SetIid(child.GetExtAddress());
 
@@ -666,7 +666,7 @@ void AddressResolver::HandleAddressQuery(Coap::Message &aMessage, const Ip6::Mes
         ExitNow();
     }
 
-    for (ChildTable::Iterator iter(GetInstance(), ChildTable::kInStateValid); !iter.IsDone(); iter++)
+    for (ChildTable::Iterator iter(GetInstance(), Child::kInStateValid); !iter.IsDone(); iter++)
     {
         Child &child = *iter.GetChild();
 

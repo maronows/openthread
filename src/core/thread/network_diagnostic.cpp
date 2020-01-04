@@ -146,21 +146,21 @@ void NetworkDiagnostic::HandleDiagnosticGetResponse(void *               aContex
                                                     otError              aResult)
 {
     static_cast<NetworkDiagnostic *>(aContext)->HandleDiagnosticGetResponse(
-        *static_cast<Coap::Message *>(aMessage), *static_cast<const Ip6::MessageInfo *>(aMessageInfo), aResult);
+        static_cast<Coap::Message *>(aMessage), static_cast<const Ip6::MessageInfo *>(aMessageInfo), aResult);
 }
 
-void NetworkDiagnostic::HandleDiagnosticGetResponse(Coap::Message &         aMessage,
-                                                    const Ip6::MessageInfo &aMessageInfo,
+void NetworkDiagnostic::HandleDiagnosticGetResponse(Coap::Message *         aMessage,
+                                                    const Ip6::MessageInfo *aMessageInfo,
                                                     otError                 aResult)
 {
     VerifyOrExit(aResult == OT_ERROR_NONE);
-    VerifyOrExit(aMessage.GetCode() == OT_COAP_CODE_CHANGED);
+    VerifyOrExit(aMessage && aMessage->GetCode() == OT_COAP_CODE_CHANGED);
 
     otLogInfoNetDiag("Received diagnostic get response");
 
     if (mReceiveDiagnosticGetCallback)
     {
-        mReceiveDiagnosticGetCallback(&aMessage, &aMessageInfo, mReceiveDiagnosticGetCallbackContext);
+        mReceiveDiagnosticGetCallback(aMessage, aMessageInfo, mReceiveDiagnosticGetCallbackContext);
     }
 
 exit:
@@ -230,7 +230,7 @@ otError NetworkDiagnostic::AppendChildTable(Message &aMessage)
 
     tlv.Init();
 
-    count = Get<ChildTable>().GetNumChildren(ChildTable::kInStateValid);
+    count = Get<ChildTable>().GetNumChildren(Child::kInStateValid);
 
     // The length of the Child Table TLV may exceed the outgoing link's MTU (1280B).
     // As a workaround we limit the number of entries in the Child Table TLV,
@@ -245,7 +245,7 @@ otError NetworkDiagnostic::AppendChildTable(Message &aMessage)
 
     SuccessOrExit(error = aMessage.Append(&tlv, sizeof(ChildTableTlv)));
 
-    for (ChildTable::Iterator iter(GetInstance(), ChildTable::kInStateValid); !iter.IsDone(); iter++)
+    for (ChildTable::Iterator iter(GetInstance(), Child::kInStateValid); !iter.IsDone(); iter++)
     {
         VerifyOrExit(count--);
 
