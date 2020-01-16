@@ -621,7 +621,7 @@ public:
      * e.g. for returning from sleep mode to active mode.
      *
      * @retval OT_ERROR_NONE           Connection message successfully queued.
-     * @retval OT_ERROR_INVALID_STATE  The client is in invalid state. It must be disconnected before new connection establishment.
+     * @retval OT_ERROR_INVALID_STATE  Previous connection is still pending.
      * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
      *
      */
