@@ -85,6 +85,13 @@ otError otMqttsnConnectDefault(otInstance *aInstance, const otIp6Address *aAddre
     return client.Connect(config);
 }
 
+otError otMqttsnReconnect(otInstance *aInstance)
+{
+    Instance &instance = *static_cast<Instance *>(aInstance);
+    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
+    return client.Reconnect();
+}
+
 otError otMqttsnSubscribe(otInstance *aInstance, const char *aTopicName, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);

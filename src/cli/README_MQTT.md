@@ -16,6 +16,7 @@ help
 start
 stop
 connect
+reconnect
 subscribe
 state
 register
@@ -63,6 +64,18 @@ Connect to MQTT-SN gateway. Client is connected with default connection settings
 
 ```bash
 > mqtt connect 2018:ff9b::ac12:8 10000
+Done
+connected
+```
+
+### reconnect
+
+Usage: `mqtt reconnect`
+
+Reconnect MQTT-SN client with current connection settings. This is method is useful e.g. for returning from sleep mode to active mode.
+
+```bash
+> mqtt reconnect
 Done
 connected
 ```

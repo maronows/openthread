@@ -40,11 +40,12 @@ namespace Cli {
 const struct Mqtt::Command Mqtt::sCommands[] = {
     {"help", &Mqtt::ProcessHelp},               {"start", &Mqtt::ProcessStart},
     {"stop", &Mqtt::ProcessStop},               {"connect", &Mqtt::ProcessConnect},
-    {"subscribe", &Mqtt::ProcessSubscribe},     {"state", &Mqtt::ProcessState},
-    {"register", &Mqtt::ProcessRegister},       {"publish", &Mqtt::ProcessPublish},
-    {"unsubscribe", &Mqtt::ProcessUnsubscribe}, {"disconnect", &Mqtt::ProcessDisconnect},
-    {"sleep", &Mqtt::ProcessSleep},             {"awake", &Mqtt::ProcessAwake},
-    {"searchgw", &Mqtt::ProcessSearchgw},       {"gateways", &Mqtt::ProcessGateways}
+    {"reconnect", &Mqtt::ProcessReconnect},     {"subscribe", &Mqtt::ProcessSubscribe},
+    {"state", &Mqtt::ProcessState},             {"register", &Mqtt::ProcessRegister},
+    {"publish", &Mqtt::ProcessPublish},         {"unsubscribe", &Mqtt::ProcessUnsubscribe},
+    {"disconnect", &Mqtt::ProcessDisconnect},   {"sleep", &Mqtt::ProcessSleep},
+    {"awake", &Mqtt::ProcessAwake},             {"searchgw", &Mqtt::ProcessSearchgw},
+    {"gateways", &Mqtt::ProcessGateways}
 };
 
 Mqtt::Mqtt(Interpreter &aInterpreter)
@@ -141,6 +142,14 @@ otError Mqtt::ProcessConnect(int argc, char *argv[])
 
 exit:
 	return error;
+}
+
+otError Mqtt::ProcessReconnect(int argc, char *argv[])
+{
+    OT_UNUSED_VARIABLE(argc);
+    OT_UNUSED_VARIABLE(argv);
+
+    return otMqttsnReconnect(mInterpreter.mInstance);
 }
 
 otError Mqtt::ProcessSubscribe(int argc, char *argv[])
