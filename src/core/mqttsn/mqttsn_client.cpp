@@ -1111,9 +1111,10 @@ otError MqttsnClient::Process()
 
 exit:
     // Handle communication timeout
-    // Transition from Active or Asleep to Lost state defined in MQTT-SN 1.2 state diagram
+    // Transition from Active, Asleep or Awake to Lost state
     // In other case the timeout is ignored
-    if (mTimeoutRaised && (mClientState == kStateActive || mClientState == kStateAsleep))
+    if (mTimeoutRaised && (mClientState == kStateActive || mClientState == kStateAsleep
+            || mClientState == kStateAwake))
     {
         mClientState = mDisconnectRequested ? kStateDisconnected : kStateLost;
         OnDisconnected();
@@ -1139,12 +1140,6 @@ otError MqttsnClient::Connect(const MqttsnConfig &aConfig)
     ConnectMessage connectMessage(mConfig.GetCleanSession(), false, mConfig.GetKeepAlive(), mConfig.GetClientId().AsCString());
     unsigned char buffer[MAX_PACKET_SIZE];
 
-    // Cannot connect in active state (already connected)
-    if (mClientState == kStateActive)
-    {
-        error = OT_ERROR_INVALID_STATE;
-        goto exit;
-    }
     // Previous Connect message is still pending
     if (!mConnectQueue.IsEmpty())
     {
@@ -1173,6 +1168,11 @@ otError MqttsnClient::Connect(const MqttsnConfig &aConfig)
     ResetPingreqTime();
 exit:
     return error;
+}
+
+otError MqttsnClient::Reconnect(void)
+{
+    return Connect(mConfig);
 }
 
 otError MqttsnClient::Subscribe(const char* aTopicName, bool aIsShortTopicName, Qos aQos, otMqttsnSubscribedHandler aCallback, void* aContext)

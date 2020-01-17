@@ -358,7 +358,7 @@ otMqttsnClientState otMqttsnGetState(otInstance *aInstance);
  *
  * @retval OT_ERROR_NONE           Connection message successfully queued.
  * @retval OT_ERROR_INVALID_ARGS   Invalid connection parameters.
- * @retval OT_ERROR_INVALID_STATE  The client is in invalid state. It must be disconnected before new connection establishment.
+ * @retval OT_ERROR_INVALID_STATE  Previous connection is still pending.
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
@@ -378,6 +378,19 @@ otError otMqttsnConnect(otInstance *aInstance, const otMqttsnConfig *aConfig);
  *
  */
 otError otMqttsnConnectDefault(otInstance *aInstance, const otIp6Address* aAddress, uint16_t mPort);
+
+/**
+ * Reconnect MQTT-SN client with current connection settings. This is method is useful
+ * e.g. for returning from sleep mode to active mode.
+ *
+ * @param[in]  aInstance  A pointer to an OpenThread instance.
+ *
+ * @retval OT_ERROR_NONE           Connection message successfully queued.
+ * @retval OT_ERROR_INVALID_STATE  The client is in invalid state. It must be disconnected before new connection establishment.
+ * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
+ *
+ */
+otError otMqttsnReconnect(otInstance *aInstance);
 
 /**
  * Subscribe to the topic by topic name string.

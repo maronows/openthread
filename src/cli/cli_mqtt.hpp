@@ -74,6 +74,7 @@ private:
     otError ProcessStart(int argc, char *argv[]);
     otError ProcessStop(int argc, char *argv[]);
     otError ProcessConnect(int argc, char *argv[]);
+    otError ProcessReconnect(int argc, char *argv[]);
     otError ProcessSubscribe(int argc, char *argv[]);
     otError ProcessState(int argc, char *argv[]);
     otError ProcessRegister(int argc, char *argv[]);
