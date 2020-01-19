@@ -186,7 +186,7 @@ typedef struct otMqttsnConfig {
      */
     bool mCleanSession;
     /**
-     * Retransmission timeout in milliseconds.
+     * Retransmission timeout in seconds.
      */
     uint32_t mRetransmissionTimeout;
     /**
