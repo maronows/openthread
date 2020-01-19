@@ -382,7 +382,7 @@ public:
      */
     MqttsnConfig(void)
         : mAddress()
-        , mPort()
+        , mPort(OT_MQTTSN_DEFAULT_PORT)
         , mClientId()
         , mKeepAlive(30)
         , mCleanSession()
