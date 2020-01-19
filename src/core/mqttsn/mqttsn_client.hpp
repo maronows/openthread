@@ -582,7 +582,8 @@ public:
      *
      * @param[in]  aPort  MQTT-SN client listening port.
      *
-     * @retval OT_ERROR_NONE  Successfully started the service.
+     * @retval OT_ERROR_NONE           Successfully started the service.
+     * @retval OT_ERROR_INVALID_STATE  MQTT-SN client is already running.
      *
      */
     otError Start(uint16_t aPort);
@@ -993,6 +994,7 @@ protected:
 private:
     uint16_t GetNextMessageId(void);
     void ResetPingreqTime(void);
+    void WakeUp(void);
     void ConnackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void SubackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void PublishReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);

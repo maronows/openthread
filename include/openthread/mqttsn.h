@@ -325,7 +325,8 @@ typedef otMqttsnReturnCode (*otMqttsnRegisterReceivedHandler)(otMqttsnTopicId aT
  * @param[in]  aInstance  A pointer to an OpenThread instance.
  * @param[in]  aPort      MQTT-SN client listening port.
  *
- * @retval OT_ERROR_NONE  Successfully started the service.
+ * @retval OT_ERROR_NONE           Successfully started the service.
+ * @retval OT_ERROR_INVALID_STATE  MQTT-SN client is already running.
  *
  */
 otError otMqttsnStart(otInstance *aInstance, uint16_t aPort);
