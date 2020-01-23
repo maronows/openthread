@@ -1046,7 +1046,7 @@ otError MqttsnClient::Start(uint16_t aPort)
     Ip6::SockAddr sockaddr;
     sockaddr.mPort = aPort;
 
-    VerifyOrExit(mIsRunning, error = OT_ERROR_INVALID_STATE);
+    VerifyOrExit(!mIsRunning, error = OT_ERROR_INVALID_STATE);
     // Open UDP socket
     SuccessOrExit(error = mSocket.Open(MqttsnClient::HandleUdpReceive, this));
     // Start listening on configured port
