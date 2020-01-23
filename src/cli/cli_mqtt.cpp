@@ -276,7 +276,7 @@ otError Mqtt::ProcessAwake(int argc, char *argv[])
         ExitNow(error = OT_ERROR_INVALID_ARGS);
     }
     SuccessOrExit(error = mInterpreter.ParseLong(argv[1], timeout));
-    SuccessOrExit(error = otMqttsnSleep(mInterpreter.mInstance, (uint32_t)timeout));
+    SuccessOrExit(error = otMqttsnAwake(mInterpreter.mInstance, (uint32_t)timeout));
 exit:
     return error;
 }

@@ -1699,7 +1699,7 @@ otError MqttsnClient::PingGateway()
     PingreqMessage pingreqMessage(mConfig.GetClientId().AsCString());
     unsigned char buffer[MAX_PACKET_SIZE];
 
-    if (mClientState != kStateActive && mClientState != kStateAwake)
+    if (mClientState == kStateDisconnected && mClientState == kStateLost)
     {
         error = OT_ERROR_INVALID_STATE;
         goto exit;
