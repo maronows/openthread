@@ -782,7 +782,7 @@ public:
     /**
      * Put the client into asleep state or change sleep duration. Client must be awaken or reconnected before duration time passes.
      *
-     * @param[in]  aDuration  Duration time for which will the client stay in asleep state.
+     * @param[in]  aDuration  Duration time in seconds for which will the client stay in asleep state.
      *
      * @retval OT_ERROR_NONE           Sleep request successfully queued.
      * @retval OT_ERROR_INVALID_STATE  The client is not in relevant state. It must be asleep, awake or active.
