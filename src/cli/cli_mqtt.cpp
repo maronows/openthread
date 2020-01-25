@@ -96,7 +96,7 @@ otError Mqtt::ProcessStart(int argc, char *argv[])
     OT_UNUSED_VARIABLE(argc);
     OT_UNUSED_VARIABLE(argv);
     otError error;
-    long port = OT_DEFAULT_MQTTSN_PORT;
+    long port = OT_MQTTSN_DEFAULT_PORT;
     if (argc > 2)
     {
         ExitNow(error = OT_ERROR_INVALID_ARGS);
@@ -276,7 +276,7 @@ otError Mqtt::ProcessAwake(int argc, char *argv[])
         ExitNow(error = OT_ERROR_INVALID_ARGS);
     }
     SuccessOrExit(error = mInterpreter.ParseLong(argv[1], timeout));
-    SuccessOrExit(error = otMqttsnSleep(mInterpreter.mInstance, (uint32_t)timeout));
+    SuccessOrExit(error = otMqttsnAwake(mInterpreter.mInstance, (uint32_t)timeout));
 exit:
     return error;
 }

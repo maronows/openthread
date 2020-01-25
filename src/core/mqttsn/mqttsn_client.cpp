@@ -1046,6 +1046,7 @@ otError MqttsnClient::Start(uint16_t aPort)
     Ip6::SockAddr sockaddr;
     sockaddr.mPort = aPort;
 
+    VerifyOrExit(!mIsRunning, error = OT_ERROR_INVALID_STATE);
     // Open UDP socket
     SuccessOrExit(error = mSocket.Open(MqttsnClient::HandleUdpReceive, this));
     // Start listening on configured port
@@ -1124,8 +1125,8 @@ exit:
         }
     }
     mTimeoutRaised = false;
-    // Only enqueue process when client running
-    if (mIsRunning)
+    // Only enqueue process when client running and is not asleep
+    if (mIsRunning && mClientState != kStateAsleep)
     {
         mProcessTask.Post();
     }
@@ -1166,6 +1167,7 @@ otError MqttsnClient::Connect(const MqttsnConfig &aConfig)
 
     // Set next keepalive PINGREQ time
     ResetPingreqTime();
+    WakeUp();
 exit:
     return error;
 }
@@ -1487,6 +1489,7 @@ otError MqttsnClient::Disconnect()
 
     // Set flag for regular disconnect request and wait for DISCONNECT message from gateway
     mDisconnectRequested = true;
+    WakeUp();
 
 exit:
     if (messageCopy != NULL)
@@ -1520,6 +1523,7 @@ otError MqttsnClient::Sleep(uint16_t aDuration)
 
     // Set flag for sleep request and wait for DISCONNECT message from gateway
     mSleepRequested = true;
+    WakeUp();
 
 exit:
     return error;
@@ -1541,6 +1545,8 @@ otError MqttsnClient::Awake(uint32_t aTimeout)
 
     // Set awake state and wait for any PUBLISH messages
     mClientState = kStateAwake;
+    // Enqueue process tasklet again
+    mProcessTask.Post();
 exit:
     return error;
 }
@@ -1693,7 +1699,7 @@ otError MqttsnClient::PingGateway()
     PingreqMessage pingreqMessage(mConfig.GetClientId().AsCString());
     unsigned char buffer[MAX_PACKET_SIZE];
 
-    if (mClientState != kStateActive && mClientState != kStateAwake)
+    if (mClientState == kStateDisconnected && mClientState == kStateLost)
     {
         error = OT_ERROR_INVALID_STATE;
         goto exit;
@@ -1750,6 +1756,18 @@ uint16_t MqttsnClient::GetNextMessageId(void)
 void MqttsnClient::ResetPingreqTime(void)
 {
     mPingReqTime = TimerMilli::GetNow().GetValue() + mConfig.GetKeepAlive() * 800;
+}
+
+void MqttsnClient::WakeUp(void)
+{
+    // Wake up client from sleeping mode
+    // If in sleep mode then switch to active again
+    if (mClientState == kStateAsleep || mClientState == kStateAwake)
+    {
+        mClientState = kStateActive;
+    }
+    // Enqueue process tasklet again
+    mProcessTask.Post();
 }
 
 void MqttsnClient::HandleSubscribeTimeout(const MessageMetadata<otMqttsnSubscribedHandler> &aMetadata, void* aContext)

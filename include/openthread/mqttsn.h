@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 
-#define OT_DEFAULT_MQTTSN_PORT 10000
+#define OT_MQTTSN_DEFAULT_PORT 10000
 
 #ifndef OPENTHREAD_CONFIG_MQTTSN_ENABLE
 #define OPENTHREAD_CONFIG_MQTTSN_ENABLE 0
@@ -186,7 +186,7 @@ typedef struct otMqttsnConfig {
      */
     bool mCleanSession;
     /**
-     * Retransmission timeout in milliseconds.
+     * Retransmission timeout in seconds.
      */
     uint32_t mRetransmissionTimeout;
     /**
@@ -325,7 +325,8 @@ typedef otMqttsnReturnCode (*otMqttsnRegisterReceivedHandler)(otMqttsnTopicId aT
  * @param[in]  aInstance  A pointer to an OpenThread instance.
  * @param[in]  aPort      MQTT-SN client listening port.
  *
- * @retval OT_ERROR_NONE  Successfully started the service.
+ * @retval OT_ERROR_NONE           Successfully started the service.
+ * @retval OT_ERROR_INVALID_STATE  MQTT-SN client is already running.
  *
  */
 otError otMqttsnStart(otInstance *aInstance, uint16_t aPort);
@@ -590,7 +591,7 @@ otError otMqttsnDisconnect(otInstance *aInstance);
  * Put the client into asleep state or change sleep duration. Client must be awaken or reconnected before duration time passes.
  *
  * @param[in]  aInstance        A pointer to an OpenThread instance.
- * @param[in]  aDuration  Duration time for which will the client stay in asleep state.
+ * @param[in]  aDuration        Duration time in seconds for which will the client stay in asleep state.
  *
  * @retval OT_ERROR_NONE           Sleep request successfully queued.
  * @retval OT_ERROR_INVALID_STATE  The client is not in relevant state. It must be asleep, awake or active.

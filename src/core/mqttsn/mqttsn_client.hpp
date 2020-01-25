@@ -382,7 +382,7 @@ public:
      */
     MqttsnConfig(void)
         : mAddress()
-        , mPort()
+        , mPort(OT_MQTTSN_DEFAULT_PORT)
         , mClientId()
         , mKeepAlive(30)
         , mCleanSession()
@@ -582,7 +582,8 @@ public:
      *
      * @param[in]  aPort  MQTT-SN client listening port.
      *
-     * @retval OT_ERROR_NONE  Successfully started the service.
+     * @retval OT_ERROR_NONE           Successfully started the service.
+     * @retval OT_ERROR_INVALID_STATE  MQTT-SN client is already running.
      *
      */
     otError Start(uint16_t aPort);
@@ -781,7 +782,7 @@ public:
     /**
      * Put the client into asleep state or change sleep duration. Client must be awaken or reconnected before duration time passes.
      *
-     * @param[in]  aDuration  Duration time for which will the client stay in asleep state.
+     * @param[in]  aDuration  Duration time in seconds for which will the client stay in asleep state.
      *
      * @retval OT_ERROR_NONE           Sleep request successfully queued.
      * @retval OT_ERROR_INVALID_STATE  The client is not in relevant state. It must be asleep, awake or active.
@@ -993,6 +994,7 @@ protected:
 private:
     uint16_t GetNextMessageId(void);
     void ResetPingreqTime(void);
+    void WakeUp(void);
     void ConnackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void SubackReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);
     void PublishReceived(const Ip6::MessageInfo &messageInfo, const unsigned char* data, uint16_t length);

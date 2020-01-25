@@ -591,7 +591,7 @@ otError PingreqMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32
     MQTTSNString clientId = MQTTSNString_initializer;
     clientId.cstring = const_cast<char*>(mClientId.AsCString());
     int32_t length = MQTTSNSerialize_pingreq(aBuffer, aBufferLength, clientId);
-    if (length <= 0)
+    if (length < 0)
     {
         return OT_ERROR_FAILED;
     }
