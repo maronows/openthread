@@ -1541,7 +1541,7 @@ otError MqttsnClient::Awake(uint32_t aTimeout)
     }
 
     // Send PINGEQ message
-    SuccessOrExit(error = PingGateway());
+    SuccessOrExit(error = PingGateway(aTimeout, mConfig.GetRetransmissionCount()));
 
     // Set awake state and wait for any PUBLISH messages
     mClientState = kStateAwake;
@@ -1693,11 +1693,18 @@ exit:
 
 otError MqttsnClient::PingGateway()
 {
+    return PingGateway(mConfig.GetRetransmissionTimeout() * 1000, mConfig.GetRetransmissionCount());
+}
+
+otError MqttsnClient::PingGateway(uint32_t aRetransmissionTimeout, uint8_t aRetransmissionCount)
+{
     otError error = OT_ERROR_NONE;
     int32_t length = -1;
     Message* message = NULL;
     PingreqMessage pingreqMessage(mConfig.GetClientId().AsCString());
     unsigned char buffer[MAX_PACKET_SIZE];
+    MessageMetadata<void*> metadata;
+    Message *messageCopy = NULL;
 
     if (mClientState == kStateDisconnected && mClientState == kStateLost)
     {
@@ -1706,20 +1713,29 @@ otError MqttsnClient::PingGateway()
     }
 
     // There is already pingreq message waiting
-    if (!mPingreqQueue.IsEmpty())
-    {
-        goto exit;
-    }
+    VerifyOrExit(mPingreqQueue.IsEmpty());
 
     // Serialize and send PINGREQ message
     SuccessOrExit(error = pingreqMessage.Serialize(buffer, MAX_PACKET_SIZE, &length));
     SuccessOrExit(error = NewMessage(&message, buffer, length));
-    SuccessOrExit(error = SendMessageWithRetransmission<void*>(*message,
-            mPingreqQueue, 0, NULL, NULL));
+    messageCopy = message->Clone();
+
+    // Enqueue copy to the queue waiting for PINGRESP message
+    VerifyOrExit(messageCopy != NULL, error = OT_ERROR_NO_BUFS);
+    SuccessOrExit(error = SendMessage(*message));
+    metadata = MessageMetadata<void*>(mConfig.GetAddress(), mConfig.GetPort(), 0,
+            TimerMilli::GetNow().GetValue(), aRetransmissionTimeout,
+            aRetransmissionCount, NULL, NULL);
+    SuccessOrExit(error = mPingreqQueue.EnqueueCopy(*messageCopy,
+            messageCopy->GetLength(), metadata));
 
     ResetPingreqTime();
 
 exit:
+ if (messageCopy)
+    {
+        messageCopy->Free();
+    }
     return error;
 }
 

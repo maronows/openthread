@@ -161,7 +161,8 @@ public:
      * @param[in]  aDestinationPort        Message destination port.
      * @param[in]  aMessageId              MQTT-SN Message ID.
      * @param[in]  aTimestamp              Time stamp of message in milliseconds for timeout evaluation.
-     * @param[in]  aRetransmissionTimeout  Time in millisecond after which message is message timeout invoked.
+     * @param[in]  aRetransmissionTimeout  Time in milliseconds after which message is message timeout invoked.
+     * @param[in]  aRetransmissionCount    Number of retransmission attempts.
      * @param[in]  aCallback               A function pointer for handling message timeout.
      * @param[in]  aContext                Pointer to callback passed to timeout callback.
      *
@@ -794,6 +795,8 @@ public:
     /**
      * Awake the client and receive pending messages.
      *
+     * @note  Configuration retransmission count is still applied.
+     *
      * @param[in]  aTimeout  Timeout in milliseconds for staying in awake state. PINGRESP message must be received before timeout time passes.
      *
      * @retval OT_ERROR_NONE           Awake request successfully queued.
@@ -974,6 +977,18 @@ protected:
      *
      */
     otError PingGateway(void);
+
+    /**
+     * Send PINGREQ message to gateway.
+     *
+     * @param[in]  aRetransmissionCount    Number of retransmission attempts.
+     * @param[in]  aRetransmissionTimeout  Time in milliseconds after which message is message timeout invoked.
+     *
+     * @retval OT_ERROR_NONE      PINGREQ message successfully enqueued.
+     * @retval OT_ERROR_NO_BUFS   Insufficient available buffers to process.
+     *
+     */
+    otError PingGateway(uint32_t aRetransmissionTimeout, uint8_t aRetransmissionCount);
 
     /**
      * This method should be called after disconnected or lost to configure client internal state and forcing all messages to time out.

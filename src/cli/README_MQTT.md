@@ -187,7 +187,7 @@ Usage: `mqtt awake <timeout>`
 
 Take client to the awake state from the sleeping state. In this state device can receive buffered messages from the gateway.
 
-* timeout: Timeout in ms for whis is the client awake before going asleep.
+* timeout: Maximal timeout in ms for which is the client awake before going asleep. After expiration the connection is lost. Default retransmission count is still applied.
 
 ```bash
 > mqtt awake 1000
