@@ -603,6 +603,8 @@ otError otMqttsnSleep(otInstance *aInstance, uint16_t aDuration);
 /**
  * Awake the client and receive pending messages.
  *
+ * @note  Configuration retransmission count is still applied.
+ *
  * @param[in]  aInstance        A pointer to an OpenThread instance.
  * @param[in]  aTimeout  Timeout in milliseconds for staying in awake state. PINGRESP message must be received before timeout time passes.
  *

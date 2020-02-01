@@ -93,12 +93,12 @@ Run new OTBR container from official image:
 
 ```
 sudo docker run -d --name otbr --sysctl "net.ipv6.conf.all.disable_ipv6=0 \
-        net.ipv4.conf.all.forwarding=1 net.ipv6.conf.all.forwarding=1" -p 80:8080 \
+        net.ipv4.conf.all.forwarding=1 net.ipv6.conf.all.forwarding=1" -p 8080:80 \
         --dns=127.0.0.1 -v /dev/ttyACM0:/dev/ttyACM0 --net test --ip 172.18.0.6 \
         --privileged openthread/otbr --ncp-path /dev/ttyACM0 --nat64-prefix "2018:ff9b::/96"
 ```
 
-Container will use `test` network with static IP address 172.18.0.6. If needed replace `/dev/ttyACM0` in `-v` and `--ncp-path` parameter with name under which appear NCP device in your system (`/dev/ttyS0`, `/dev/ttyUSB0` etc.). NAT-64 prefix is set to `2018:ff9b::/96`. It allows address translation and routing to local addresses.
+Container will use `test` network with static IP address 172.18.0.6. If needed replace `/dev/ttyACM0` in `-v` and `--ncp-path` parameter with name under which appear NCP device in your system (`/dev/ttyS0`, `/dev/ttyUSB0` etc.). NAT-64 prefix is set to `2018:ff9b::/96`. It allows address translation and routing to local addresses. Border Router web GUI is bound to port 8080.
 
 Next step is to run Mosquitto container as MQTT broker for sample test. Broker IP address in `test` network will be 172.18.0.7:
 
