@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include "mac/channel_mask.hpp"
 #include "utils/parse_cmdline.hpp"
-#include "utils/wrap_string.h"
 
 #include <openthread/icmp6.h>
 #include <openthread/link.h>
@@ -83,6 +82,7 @@
 
 #include "cli_server.hpp"
 #include "common/encoding.hpp"
+#include "common/string.hpp"
 
 using ot::Encoding::BigEndian::HostSwap16;
 using ot::Encoding::BigEndian::HostSwap32;
@@ -234,6 +234,9 @@ Interpreter::Interpreter(Instance *aInstance)
     , mPingTimer(*aInstance, &Interpreter::HandlePingTimer, this)
 #if OPENTHREAD_CONFIG_DNS_CLIENT_ENABLE
     , mResolvingInProgress(0)
+#endif
+#if OPENTHREAD_CONFIG_SNTP_CLIENT_ENABLE
+    , mSntpQueryingInProgress(false)
 #endif
     , mUdp(*this)
     , mDataset(*this)
@@ -3576,7 +3579,7 @@ otError Interpreter::ProcessMacRetries(int argc, char *argv[])
             otLinkSetMaxFrameRetriesDirect(mInstance, static_cast<uint8_t>(value));
         }
     }
-#ifdef OPENTHREAD_FTD
+#if OPENTHREAD_FTD
     else if (strcmp(argv[0], "indirect") == 0)
     {
         if (argc == 1)
@@ -3623,7 +3626,7 @@ void Interpreter::ProcessLine(char *aBuf, uint16_t aBufLength, Server &aServer)
 
     mServer = &aServer;
 
-    VerifyOrExit(aBuf != NULL && strnlen(aBuf, aBufLength + 1) <= aBufLength);
+    VerifyOrExit(aBuf != NULL && StringLength(aBuf, aBufLength + 1) <= aBufLength);
 
     VerifyOrExit(Utils::CmdLineParser::ParseCmd(aBuf, argc, argv, kMaxArgs) == OT_ERROR_NONE,
                  mServer->OutputFormat("Error: too many args (max %d)\r\n", kMaxArgs));

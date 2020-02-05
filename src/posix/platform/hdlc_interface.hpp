@@ -36,8 +36,9 @@
 
 #include "platform-config.h"
 #include "spinel_interface.hpp"
-
 #include "ncp/hdlc.hpp"
+
+#if OPENTHREAD_POSIX_RCP_UART_ENABLE
 
 namespace ot {
 namespace PosixApp {
@@ -46,16 +47,17 @@ namespace PosixApp {
  * This class defines an HDLC interface to the Radio Co-processor (RCP)
  *
  */
-class HdlcInterface : public SpinelInterface
+class HdlcInterface
 {
 public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in] aCallback   A reference to a `Callback` object.
+     * @param[in] aCallback     A reference to a `Callback` object.
+     * @param[in] aFrameBuffer  A reference to a `RxFrameBuffer` object.
      *
      */
-    explicit HdlcInterface(Callbacks &aCallbacks);
+    HdlcInterface(SpinelInterface::Callbacks &aCallback, SpinelInterface::RxFrameBuffer &aFrameBuffer);
 
     /**
      * This destructor deinitializes the object.
@@ -108,7 +110,7 @@ public:
      * @retval OT_ERROR_RESPONSE_TIMEOUT No spinel frame is received within @p aTimeout.
      *
      */
-    otError WaitForFrame(struct timeval &aTimeout);
+    otError WaitForFrame(const struct timeval &aTimeout);
 
     /**
      * This method updates the file descriptor sets with file descriptors used by the radio driver.
@@ -199,7 +201,15 @@ private:
     static int ForkPty(const char *aCommand, const char *aArguments);
 #endif
 
-    Callbacks &   mCallbacks;
+    enum
+    {
+        kMaxFrameSize = SpinelInterface::kMaxFrameSize,
+        kMaxWaitTime  = 2000, ///< Maximum wait time in Milliseconds for socket to become writable (see `SendFrame`).
+    };
+
+    SpinelInterface::Callbacks &    mCallbacks;
+    SpinelInterface::RxFrameBuffer &mRxFrameBuffer;
+
     int           mSockFd;
     Hdlc::Decoder mHdlcDecoder;
 };
@@ -207,4 +217,5 @@ private:
 } // namespace PosixApp
 } // namespace ot
 
+#endif // OPENTHREAD_POSIX_RCP_UART_ENABLE
 #endif // POSIX_APP_HDLC_INTERFACE_HPP_

@@ -170,12 +170,6 @@ if test "${enable_no_executables_hack}" = "yes"
 then
     AC_MSG_RESULT([yes])
     AC_NO_EXECUTABLES
-    # Here we guess conservative values for tests that require link checks
-    # to test for these features. This will prevent these checks from
-    # being performed later in the configuration process.
-    ac_cv_func_strlcat=${ac_cv_func_strlcat-no}
-    ac_cv_func_strlcpy=${ac_cv_func_strlcpy-no}
-    ac_cv_func_strnlen=${ac_cv_func_strnlen-no}
 else
     AC_MSG_RESULT([no])
 fi
@@ -222,6 +216,11 @@ AC_PROG_LN_S
 
 AC_PATH_PROG(CMP, cmp)
 
+# Check for and initialize libtool
+
+LT_INIT
+AC_PROG_LIBTOOL
+
 #
 # Checks for specific compiler characteristics
 #
@@ -232,8 +231,8 @@ AC_PATH_PROG(CMP, cmp)
 #   -Wall                        CC, CXX
 #
 
-PROSPECTIVE_CFLAGS="-Wall -Wextra -Wshadow -Werror -std=c99 -pedantic-errors -Wno-gnu-zero-variadic-macro-arguments"
-PROSPECTIVE_CXXFLAGS="-Wall -Wextra -Wshadow -Werror -std=gnu++98 -Wno-c++14-compat -fno-exceptions"
+PROSPECTIVE_CFLAGS="-Wall -Wextra -Wshadow -Wundef -Werror -Wno-error=undef -std=c99 -pedantic-errors"
+PROSPECTIVE_CXXFLAGS="-Wall -Wextra -Wshadow -Wundef -Werror -Wno-error=undef -std=gnu++98 -Wno-c++14-compat -fno-exceptions"
 
 AC_CACHE_CHECK([whether $CC is Clang],
     [nl_cv_clang],
@@ -250,17 +249,60 @@ AC_CACHE_CHECK([whether $CC is Clang],
     ])
 
 if test "${nl_cv_clang}" = "yes"; then
-    PROSPECTIVE_CFLAGS="${PROSPECTIVE_CFLAGS} -Wconversion"
+    PROSPECTIVE_CFLAGS="${PROSPECTIVE_CFLAGS} -Wconversion -Wno-gnu-zero-variadic-macro-arguments"
     PROSPECTIVE_CXXFLAGS="${PROSPECTIVE_CXXFLAGS} -Wconversion"
 fi
 
-AX_CHECK_COMPILER_OPTIONS([C],   ${PROSPECTIVE_CFLAGS})
-AX_CHECK_COMPILER_OPTIONS([C++], ${PROSPECTIVE_CXXFLAGS})
+function convert_warning_flags_to_positive() {
+    flags_to_check=""
+    warning_flag_backup=""
+    for option in ${1}; do
+        case "$option"
+        in
+           -Wno-*)
+                flags_to_check="${flags_to_check} -W${option##-Wno-}"
+                warning_flag_backup="${warning_flag_backup} ${option##-Wno-}";;
+            *)
+                flags_to_check="${flags_to_check} ${option}";;
+        esac
+    done
+}
 
-# Check for and initialize libtool
+function restore_negative_form_of_warning_flags() {
+    final_flags=${1}
+    for positive_option in ${warning_flag_backup}; do
+        final_flags=$(echo $ECHO_N $final_flags | $SED "s|-W${positive_option}|-Wno-${positive_option}|g")
+    done
+    unset flags_to_check
+    unset warning_flag_backup
+}
 
-LT_INIT
-AC_PROG_LIBTOOL
+function check_prospective_CFLAGS() {
+    if test "${nl_cv_clang}" = "yes"; then
+        AX_CHECK_COMPILER_OPTIONS([C], ${PROSPECTIVE_CFLAGS})
+    else
+        convert_warning_flags_to_positive "${PROSPECTIVE_CFLAGS}"
+        AX_CHECK_COMPILER_OPTIONS([C], ${flags_to_check})
+        restore_negative_form_of_warning_flags "${CFLAGS}"
+        CFLAGS=${final_flags}
+        unset final_flags
+    fi
+}
+
+function check_prospective_CXXFLAGS() {
+    if test "${nl_cv_clang}" = "yes"; then
+        AX_CHECK_COMPILER_OPTIONS([C++], ${PROSPECTIVE_CXXFLAGS})
+    else
+        convert_warning_flags_to_positive "${PROSPECTIVE_CXXFLAGS}"
+        AX_CHECK_COMPILER_OPTIONS([C++], ${flags_to_check})
+        restore_negative_form_of_warning_flags "${CXXFLAGS}"
+        CXXFLAGS=${final_flags}
+        unset final_flags
+    fi
+}
+
+check_prospective_CFLAGS
+check_prospective_CXXFLAGS
 
 # Disable building shared libraries by default (can be enabled with --enable-shared)
 
@@ -322,7 +364,7 @@ AM_CONDITIONAL([OPENTHREAD_ENABLE_FUZZ_TARGETS], [test "${enable_fuzz_targets}" 
 
 if test "${enable_fuzz_targets}" = "no" ; then
     PROSPECTIVE_CXXFLAGS="-fno-rtti"
-    AX_CHECK_COMPILER_OPTIONS([C++], ${PROSPECTIVE_CXXFLAGS})
+    check_prospective_CXXFLAGS
 fi
 
 # Address Sanitizer
@@ -351,11 +393,11 @@ AM_CONDITIONAL([OPENTHREAD_WITH_ADDRESS_SANITIZER], [test "${enable_address_sani
 if test "${enable_address_sanitizer}" = "yes" ; then
 
     PROSPECTIVE_CFLAGS="-fsanitize=address"
+    PROSPECTIVE_CXXFLAGS="-fsanitize=address"
 
     # Check if the compilers support address sanitizer
-    AX_CHECK_COMPILER_OPTIONS([C],   ${PROSPECTIVE_CFLAGS})
-    AX_CHECK_COMPILER_OPTIONS([C++], ${PROSPECTIVE_CFLAGS})
-
+    check_prospective_CFLAGS
+    check_prospective_CXXFLAGS
 fi
 
 #
@@ -782,12 +824,12 @@ AM_CONDITIONAL([OPENTHREAD_ENABLE_CUSTOM_LINKER_FILE], [test "${with_custom_link
 
 AC_ARG_WITH(examples,
     [AS_HELP_STRING([--with-examples=TARGET],
-        [Specify the examples from one of: no, posix, cc1352, cc2538, cc2650, cc2652, efr32mg12, efr32mg21, gp712, kw41z, nrf52811, nrf52833, nrf52840, qpg6095, samr21 @<:@default=no@:>@.])],
+        [Specify the examples from one of: no, posix, cc1352, cc2538, cc2650, cc2652, efr32mg12, efr32mg13, efr32mg21, gp712, kw41z, nrf52811, nrf52833, nrf52840, qpg6095, samr21 @<:@default=no@:>@.])],
     [
         case "${with_examples}" in
         no)
             ;;
-        posix|cc1352|cc2538|cc2650|cc2652|efr32mg12|efr32mg21|gp712|kw41z|nrf52811|nrf52833|nrf52840|qpg6095|samr21)
+        posix|cc1352|cc2538|cc2650|cc2652|efr32mg12|efr32mg13|efr32mg21|gp712|kw41z|nrf52811|nrf52833|nrf52840|qpg6095|samr21)
             if test ${enable_posix_app} = "yes"; then
                 AC_MSG_ERROR([--with-examples must be no when POSIX apps are enabled by --enable-posix-app])
             fi
@@ -807,6 +849,7 @@ AM_CONDITIONAL([OPENTHREAD_EXAMPLES_CC2538],    [test "${with_examples}" = "cc25
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_CC2650],    [test "${with_examples}" = "cc2650"])
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_CC2652],    [test "${with_examples}" = "cc2652"])
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_EFR32MG12], [test "${with_examples}" = "efr32mg12"])
+AM_CONDITIONAL([OPENTHREAD_EXAMPLES_EFR32MG13], [test "${with_examples}" = "efr32mg13"])
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_EFR32MG21], [test "${with_examples}" = "efr32mg21"])
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_GP712],     [test "${with_examples}" = "gp712"])
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_KW41Z],     [test "${with_examples}" = "kw41z"])
@@ -816,7 +859,7 @@ AM_CONDITIONAL([OPENTHREAD_EXAMPLES_NRF52840],  [test "${with_examples}" = "nrf5
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_QPG6095],   [test "${with_examples}" = "qpg6095"])
 AM_CONDITIONAL([OPENTHREAD_EXAMPLES_SAMR21],    [test "${with_examples}" = "samr21"])
 
-AM_COND_IF([OPENTHREAD_EXAMPLES_POSIX], CPPFLAGS="${CPPFLAGS} -DOPENTHREAD_EXAMPLES_POSIX=1")
+AM_COND_IF([OPENTHREAD_EXAMPLES_POSIX], CPPFLAGS="${CPPFLAGS} -DOPENTHREAD_EXAMPLES_POSIX=1", CPPFLAGS="${CPPFLAGS} -DOPENTHREAD_EXAMPLES_POSIX=0")
 
 AC_MSG_CHECKING([whether to enable examples])
 AC_MSG_RESULT(${with_examples})
@@ -876,21 +919,6 @@ AC_MSG_NOTICE([checking required package dependencies])
 # Check for headers
 #
 
-#---------------------------------------------------
-# Enable BSD Security Features
-# This enables strlcpy() and other friends in GNU land.
-# While the references below generally speak of: "glibc"
-# The ARM Embedded platform uses the nano instance of NEWLIB
-# Which greatly follows and mirrors glibc.
-# --------------------------------------------------
-#
-# References:
-# 1) http://stackoverflow.com/questions/29201515/what-does-d-default-source-do
-# 2) http://man7.org/linux/man-pages/man7/feature_test_macros.7.html
-#
-CFLAGS="${CFLAGS} -D_BSD_SOURCE=1 -D_DEFAULT_SOURCE=1"
-CXXFLAGS="${CXXFLAGS} -D_BSD_SOURCE=1 -D_DEFAULT_SOURCE=1"
-
 OLD_CFLAGS="${CFLAGS}"
 CFLAGS="${CFLAGS} -Wno-error=address"
 AC_HEADER_STDBOOL
@@ -899,13 +927,6 @@ AC_HEADER_STDC
 
 AC_CHECK_HEADERS([stdint.h])
 AC_CHECK_HEADERS([string.h])
-
-#
-# Missing Functions
-#
-AC_CHECK_FUNC([strlcpy], [AC_DEFINE([HAVE_STRLCPY], [1], [Define if strlcpy exists.])])
-AC_CHECK_FUNC([strlcat], [AC_DEFINE([HAVE_STRLCAT], [1], [Define if strlcat exists.])])
-AC_CHECK_FUNC([strnlen], [AC_DEFINE([HAVE_STRNLEN], [1], [Define if strnlen exists.])])
 
 #
 # Check for types and structures
@@ -976,6 +997,10 @@ examples/platforms/efr32mg12/Makefile
 examples/platforms/efr32mg12/sleepy-demo/Makefile
 examples/platforms/efr32mg12/sleepy-demo/sleepy-demo-ftd/Makefile
 examples/platforms/efr32mg12/sleepy-demo/sleepy-demo-mtd/Makefile
+examples/platforms/efr32mg13/Makefile
+examples/platforms/efr32mg13/sleepy-demo/Makefile
+examples/platforms/efr32mg13/sleepy-demo/sleepy-demo-ftd/Makefile
+examples/platforms/efr32mg13/sleepy-demo/sleepy-demo-mtd/Makefile
 examples/platforms/efr32mg21/Makefile
 examples/platforms/efr32mg21/sleepy-demo/Makefile
 examples/platforms/efr32mg21/sleepy-demo/sleepy-demo-ftd/Makefile
