@@ -37,6 +37,7 @@ list(APPEND OT_PLATFORM_DEFINES
     "OPENTHREAD_CONFIG_LOG_LEVEL_DYNAMIC_ENABLE=1"
     "OPENTHREAD_CONFIG_NCP_UART_ENABLE=1"
     "OPENTHREAD_POSIX=1"
+    "OPENTHREAD_POSIX_RCP_UART_ENABLE=1"
     "OPENTHREAD_PROJECT_CORE_CONFIG_FILE=\"openthread-core-posix-config.h\""
 )
 set(OT_PLATFORM_DEFINES ${OT_PLATFORM_DEFINES} PARENT_SCOPE)
@@ -51,6 +52,7 @@ add_library(openthread-posix
     radio_spinel.cpp
     settings.cpp
     sim.c
+    spi_interface.cpp
     system.c
     uart.c
     udp.cpp
@@ -68,4 +70,5 @@ target_include_directories(openthread-posix PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR}/src/core
     ${PROJECT_SOURCE_DIR}/src/posix/platform
+    ${PROJECT_SOURCE_DIR}/third_party/mbedtls/repo/include
 )

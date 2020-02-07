@@ -36,6 +36,9 @@ libopenthread_posix_a_CPPFLAGS            = \
     -I$(top_srcdir)/src/core                \
     -I$(top_srcdir)/src/posix/platform      \
     -D_GNU_SOURCE                           \
+    -DOPENTHREAD_FTD=1                      \
+    -DOPENTHREAD_MTD=0                      \
+    -DOPENTHREAD_RADIO=0                    \
     $(NULL)
 
 libopenthread_posix_a_SOURCES             = \
@@ -48,6 +51,7 @@ libopenthread_posix_a_SOURCES             = \
     radio_spinel.cpp                        \
     settings.cpp                            \
     sim.c                                   \
+    spi_interface.cpp                       \
     system.c                                \
     uart.c                                  \
     udp.cpp                                 \
@@ -70,6 +74,7 @@ dist_openthread_HEADERS = $(openthread_headers)
 PRETTY_FILES                              = \
     $(libopenthread_posix_a_SOURCES)        \
     $(noinst_HEADERS)                       \
+    $(openthread_HEADERS)                   \
     $(NULL)
 
 if OPENTHREAD_BUILD_COVERAGE

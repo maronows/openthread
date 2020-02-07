@@ -1138,7 +1138,7 @@ otError MqttsnClient::Connect(const MqttsnConfig &aConfig)
     otError error = OT_ERROR_NONE;
     int32_t length = -1;
     Message* message = NULL;
-    ConnectMessage connectMessage(mConfig.GetCleanSession(), false, mConfig.GetKeepAlive(), mConfig.GetClientId().AsCString());
+    ConnectMessage connectMessage(aConfig.GetCleanSession(), false, aConfig.GetKeepAlive(), aConfig.GetClientId().AsCString());
     unsigned char buffer[MAX_PACKET_SIZE];
 
     // Previous Connect message is still pending

@@ -399,7 +399,7 @@ public:
      * @returns A reference to IPv6 address.
      *
      */
-    const Ip6::Address &GetAddress()
+    const Ip6::Address &GetAddress() const
     {
         return mAddress;
     }
@@ -421,7 +421,7 @@ public:
      * @returns Gateway port number.
      *
      */
-    uint16_t GetPort()
+    uint16_t GetPort() const
     {
         return mPort;
     }
@@ -443,7 +443,7 @@ public:
      * @returns Cliend ID string.
      *
      */
-    const ClientIdString &GetClientId()
+    const ClientIdString &GetClientId() const
     {
         return mClientId;
     }
@@ -465,7 +465,7 @@ public:
      * @returns Keepalive time in seconds.
      *
      */
-    int16_t GetKeepAlive()
+    int16_t GetKeepAlive() const
     {
         return mKeepAlive;
     }
@@ -487,7 +487,7 @@ public:
      * @returns Clean session flag.
      *
      */
-    bool GetCleanSession()
+    bool GetCleanSession() const
     {
         return mCleanSession;
     }
@@ -509,7 +509,7 @@ public:
      * @returns Retransmission timeout in milliseconds.
      *
      */
-    uint32_t GetRetransmissionTimeout()
+    uint32_t GetRetransmissionTimeout() const
     {
         return mRetransmissionTimeout;
     }
@@ -531,7 +531,7 @@ public:
      * @returns Retransmission count.
      *
      */
-    uint8_t GetRetransmissionCount()
+    uint8_t GetRetransmissionCount() const
     {
         return mRetransmissionCount;
     }

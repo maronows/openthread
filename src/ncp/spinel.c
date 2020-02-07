@@ -84,6 +84,22 @@
 #define ENOMEM 1
 #endif
 
+#ifndef SPINEL_PLATFORM_SHOULD_LOG_ASSERTS
+#define SPINEL_PLATFORM_SHOULD_LOG_ASSERTS 0
+#endif
+
+#ifndef SPINEL_PLATFORM_DOESNT_IMPLEMENT_ERRNO_VAR
+#define SPINEL_PLATFORM_DOESNT_IMPLEMENT_ERRNO_VAR 0
+#endif
+
+#ifndef SPINEL_PLATFORM_DOESNT_IMPLEMENT_FPRINTF
+#define SPINEL_PLATFORM_DOESNT_IMPLEMENT_FPRINTF 0
+#endif
+
+#ifndef SPINEL_SELF_TEST
+#define SPINEL_SELF_TEST 0
+#endif
+
 #if defined(errno) && SPINEL_PLATFORM_DOESNT_IMPLEMENT_ERRNO_VAR
 #error "SPINEL_PLATFORM_DOESNT_IMPLEMENT_ERRNO_VAR is set but errno is already defined."
 #endif
@@ -129,6 +145,20 @@ static int spinel_errno_workaround_;
 
 #ifndef require
 #define require(c, l) require_action(c, l, {})
+#endif
+
+#ifndef strnlen
+size_t strnlen(const char *s, size_t maxlen)
+{
+    size_t ret;
+
+    for (ret = 0; (ret < maxlen) && (s[ret] != 0); ret++)
+    {
+        // Empty loop.
+    }
+
+    return ret;
+}
 #endif
 
 typedef struct
