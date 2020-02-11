@@ -21,6 +21,7 @@ subscribe
 state
 register
 publish
+publishm1
 unsubscribe
 disconnect
 sleep
@@ -86,13 +87,23 @@ Usage: `mqtt subscribe <topic> [qos]`
 
 Subscribe to the topic.
 
-* topic: Name of the topic to subscribe.
+* topic: String name of the topic to subscribe or predefined topic ID with `$` prefix. 
 * qos: Requested quality of service level for the topic. Possible values are 0, 1, 2, -1. Default value is 1 (optional).
 
 Specific topic ID is returned after response. This ID is used for publising to the topic.
 
+Subscribe topic with topic name "sensors":
+
 ```bash
 > mqtt subscribe sensors
+Done
+subscribed topic id: 1
+```
+
+Subscribe topic with predefined topic ID 1:
+
+```bash
+> mqtt subscribe $1
 Done
 subscribed topic id: 1
 ```
@@ -127,16 +138,45 @@ registered topic id: 1
 
 ### publish
 
-Usage: `mqtt publish <topic-id> [payload] [qos]`
+Usage: `mqtt publish <topic> <qos> [payload]`
 
-Publish data to the topic. Data are encoded as string and white spaces are currentyl not supported (separated words are recognized as additional parameters).
+Publish data to the topic. Data are encoded as string and white spaces are currently not supported (separated words are recognized as additional parameters).
 
-* topic-id: ID of the topic. Can be obtained by [register](#register).
+* topic: Topic to publish to. Use `@` prefix for topic ID returned by [register](#register). Use `$` prefix for predefined topic ID.
+* qos: Quality of service of publish. Possible values are 0, 1, or 2.
 * payload: Text to be send in publish message payload. If empty, then empty data are send (optional).
-* qos: Quality of service of publish. Possible values are 0, 1, or 2. Default value is 1 (optional).
+
+Publish to topic ID 1 with QoS 0:
 
 ```bash
-> mqtt publish 1 {"temperature":24.0}
+> mqtt publish @1 0 {"temperature":24.0}
+Done
+published
+```
+
+Publish to predefined topic ID 1 with QoS 1:
+
+```bash
+> mqtt publish $1 1 {"temperature":24.0}
+Done
+published
+```
+
+### publishm1
+
+Usage: `mqtt publishm1 <gateway-ip> <gateway-port> <topic> [payload]`
+
+Publish data to the topic with QoS -1 without need of connection. Data are encoded as string and white spaces are currently not supported (separated words are recognized as additional parameters).
+
+* gateway-ip: IPv6 address of MQTT-SN gateway.
+* gateway-port: Port number of MQTT-SN service.
+* topic: Topic to publish to. Use `$` prefix for predefined topic ID. Only predefined topic is allowed.
+* payload: Text to be send in publish message payload. If empty, then empty data are send (optional).
+
+Publish to predefined topic ID 1:
+
+```bash
+> mqtt publish 2018:ff9b::ac12:8 10000 $1 {"temperature":24.0}
 Done
 published
 ```
@@ -147,10 +187,20 @@ Usage: `mqtt unsubscribe <topic>`
 
 Unsubscribe from the topic.
 
-* topic: Name of the topic to unsubscribe.
+* topic: String name of the topic to subscribe or predefined topic ID with `$` prefix. 
+
+Subscribe topic with topic name "sensors":
 
 ```bash
 > mqtt unsubscribe sensors
+Done
+unsubscribed
+```
+
+Subscribe topic with predefined topic ID 1:
+
+```bash
+> mqtt unsubscribe $1
 Done
 unsubscribed
 ```

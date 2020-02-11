@@ -37,6 +37,41 @@
 
 using namespace ot;
 
+otMqttsnTopic otMqttsnCreateTopicName(const char *aTopicName)
+{
+    int32_t length = strlen(aTopicName);
+    if (length <= 2)
+    {
+        return Mqttsn::Topic::FromShortTopicName(aTopicName);
+    }
+    else
+    {
+        return Mqttsn::Topic::FromTopicName(aTopicName);
+    }
+}
+
+otMqttsnTopic otMqttsnCreateTopicId(otMqttsnTopicId aTopicId)
+{
+    return Mqttsn::Topic::FromTopicId(aTopicId);
+}
+
+otMqttsnTopic otMqttsnCreatePredefinedTopicId(otMqttsnTopicId aTopicId)
+{
+    return Mqttsn::Topic::FromPredefinedTopicId(aTopicId);
+}
+
+const char *otMqttsnGetTopicName(const otMqttsnTopic *aTopic)
+{
+    const Mqttsn::Topic &topic = *static_cast<const Mqttsn::Topic *>(aTopic);
+    return topic.GetTopicName();
+}
+
+otMqttsnTopicId otMqttsnGetTopicId(const otMqttsnTopic *aTopic)
+{
+    const Mqttsn::Topic &topic = *static_cast<const Mqttsn::Topic *>(aTopic);
+    return topic.GetTopicId();
+}
+
 otError otMqttsnStart(otInstance *aInstance, uint16_t aPort)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
@@ -81,6 +116,7 @@ otError otMqttsnConnectDefault(otInstance *aInstance, const otIp6Address *aAddre
     config.SetAddress(*static_cast<const Ip6::Address *>(aAddress));
     config.SetClientId(MQTTSN_DEFAULT_CLIENT_ID);
     config.SetPort(mPort);
+    config.SetCleanSession(true);
     Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
     return client.Connect(config);
 }
@@ -92,25 +128,12 @@ otError otMqttsnReconnect(otInstance *aInstance)
     return client.Reconnect();
 }
 
-otError otMqttsnSubscribe(otInstance *aInstance, const char *aTopicName, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext)
+otError otMqttsnSubscribe(otInstance *aInstance, const otMqttsnTopic *aTopic, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
     Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Subscribe(aTopicName, false, aQos, aHandler, aContext);
-}
-
-otError otMqttsnSubscribeShort(otInstance *aInstance, const char *aShortTopicName, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext)
-{
-    Instance &instance = *static_cast<Instance *>(aInstance);
-    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Subscribe(aShortTopicName, true, aQos, aHandler, aContext);
-}
-
-otError otMqttsnSubscribeTopicId(otInstance *aInstance, otMqttsnTopicId aTopicId, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext)
-{
-    Instance &instance = *static_cast<Instance *>(aInstance);
-    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Subscribe(aTopicId, aQos, aHandler, aContext);
+    const Mqttsn::Topic &topic = *static_cast<const Mqttsn::Topic *>(aTopic);
+    return client.Subscribe(topic, aQos, aHandler, aContext);
 }
 
 otError otMqttsnRegister(otInstance *aInstance, const char* aTopicName, otMqttsnRegisteredHandler aHandler, void* aContext)
@@ -120,53 +143,28 @@ otError otMqttsnRegister(otInstance *aInstance, const char* aTopicName, otMqttsn
     return client.Register(aTopicName, aHandler, aContext);
 }
 
-otError otMqttsnPublish(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, otMqttsnTopicId aTopicId, otMqttsnPublishedHandler aHandler, void* aContext)
+otError otMqttsnPublish(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, bool aRetained, const otMqttsnTopic *aTopic, otMqttsnPublishedHandler aHandler, void* aContext)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
     Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Publish(aData, aLength, aQos, aTopicId, aHandler, aContext);
+    const Mqttsn::Topic topic = *static_cast<const Mqttsn::Topic *>(aTopic);
+    return client.Publish(aData, aLength, aQos, aRetained, topic, aHandler, aContext);
 }
 
-otError otMqttsnPublishShort(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, const char* aShortTopicName, otMqttsnPublishedHandler aHandler, void* aContext)
+otError otMqttsnPublishQosm1(otInstance *aInstance, const uint8_t* aData, int32_t aLength, bool aRetained, const otMqttsnTopic *aTopic, const otIp6Address* aAddress, uint16_t aPort)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
     Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Publish(aData, aLength, aQos, aShortTopicName, aHandler, aContext);
+    const Mqttsn::Topic topic = *static_cast<const Mqttsn::Topic *>(aTopic);
+    return client.PublishQosm1(aData, aLength, aRetained, topic, *static_cast<const Ip6::Address *>(aAddress), aPort);
 }
 
-otError otMqttsnPublishQosm1(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnTopicId aTopicId, const otIp6Address* aAddress, uint16_t aPort)
+otError otMqttsnUnsubscribe(otInstance *aInstance, const otMqttsnTopic *aTopic, otMqttsnUnsubscribedHandler aHandler, void* aContext)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
     Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.PublishQosm1(aData, aLength, aTopicId, *static_cast<const Ip6::Address *>(aAddress), aPort);
-}
-
-otError otMqttsnPublishQosm1Short(otInstance *aInstance, const uint8_t* aData, int32_t aLength, const char* aShortTopicName, const otIp6Address* aAddress, uint16_t aPort)
-{
-    Instance &instance = *static_cast<Instance *>(aInstance);
-    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.PublishQosm1(aData, aLength, aShortTopicName, *static_cast<const Ip6::Address *>(aAddress), aPort);
-}
-
-otError otMqttsnUnsubscribe(otInstance *aInstance, const char *aTopicName, otMqttsnUnsubscribedHandler aHandler, void* aContext)
-{
-    Instance &instance = *static_cast<Instance *>(aInstance);
-    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Unsubscribe(aTopicName, false, aHandler, aContext);
-}
-
-otError otMqttsnUnsubscribeTopicId(otInstance *aInstance, otMqttsnTopicId aTopicId, otMqttsnUnsubscribedHandler aHandler, void* aContext)
-{
-    Instance &instance = *static_cast<Instance *>(aInstance);
-    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Unsubscribe(aTopicId, aHandler, aContext);
-}
-
-otError otMqttsnUnsubscribeShort(otInstance *aInstance, const char* aShortTopicName, otMqttsnUnsubscribedHandler aHandler, void* aContext)
-{
-    Instance &instance = *static_cast<Instance *>(aInstance);
-    Mqttsn::MqttsnClient &client = instance.Get<Mqttsn::MqttsnClient>();
-    return client.Unsubscribe(aShortTopicName, true, aHandler, aContext);
+    const Mqttsn::Topic &topic = *static_cast<const Mqttsn::Topic *>(aTopic);
+    return client.Unsubscribe(topic, aHandler, aContext);
 }
 
 otError otMqttsnDisconnect(otInstance *aInstance)

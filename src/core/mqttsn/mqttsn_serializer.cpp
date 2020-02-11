@@ -262,15 +262,25 @@ otError PublishMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32
 {
     MQTTSN_topicid topicId;
     memset(&topicId, 0, sizeof(topicId));
-    switch (mTopicIdType)
+
+    // For QoS-1 only short topic name and predefined topic ID are allowed
+    // In addition Message ID must be null
+    if (mQos == kQosm1 && (mMessageId != 0 || mTopic.GetType() != kPredefinedTopicId))
+        return OT_ERROR_INVALID_ARGS;
+
+    switch (mTopic.GetType())
     {
     case kTopicId:
         topicId.type = MQTTSN_TOPIC_TYPE_NORMAL;
-        topicId.data.id = static_cast<unsigned short>(mTopicId);
+        topicId.data.id = static_cast<unsigned short>(mTopic.GetTopicId());
+        break;
+    case kPredefinedTopicId:
+        topicId.type = MQTTSN_TOPIC_TYPE_PREDEFINED;
+        topicId.data.id = static_cast<unsigned short>(mTopic.GetTopicId());
         break;
     case kShortTopicName:
         topicId.type = MQTTSN_TOPIC_TYPE_SHORT;
-        memcpy(topicId.data.short_name, mShortTopicName.AsCString(), 2);
+        memcpy(topicId.data.short_name, mTopic.GetTopicName(), 2);
         break;
     default:
         return OT_ERROR_INVALID_STATE;
@@ -308,13 +318,13 @@ otError PublishMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLengt
     switch (topicId.type)
     {
     case MQTTSN_TOPIC_TYPE_PREDEFINED:
+        mTopic = Topic::FromPredefinedTopicId(topicId.data.id);
+        break;
     case MQTTSN_TOPIC_TYPE_NORMAL:
-        mTopicIdType = kTopicId;
-        mTopicId = topicId.data.id;
+        mTopic = Topic::FromTopicId(topicId.data.id);
         break;
     case MQTTSN_TOPIC_TYPE_SHORT:
-        mTopicIdType = kShortTopicName;
-        SuccessOrExit(error = mShortTopicName.Set("%.*s", 2, topicId.data.short_name));
+        mTopic = Topic::FromShortTopicName(topicId.data.short_name);
         break;
     default:
         error = OT_ERROR_INVALID_STATE;
@@ -330,7 +340,21 @@ exit:
 
 otError PubackMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const
 {
-    int32_t length = MQTTSNSerialize_puback(aBuffer, aBufferLength, static_cast<unsigned char>(mTopicId),
+    unsigned short topicId;
+    switch (mTopic.GetType())
+    {
+    case kShortTopicName:
+        topicId = *reinterpret_cast<const unsigned short *>(mTopic.GetTopicName());
+        break;
+    case kTopicId:
+    case kPredefinedTopicId:
+        topicId = mTopic.GetTopicId();
+        break;
+    default:
+        return OT_ERROR_INVALID_ARGS;
+    }
+
+    int32_t length = MQTTSNSerialize_puback(aBuffer, aBufferLength, topicId,
         mMessageId, static_cast<unsigned char>(mReturnCode));
     if (length <= 0)
     {
@@ -349,7 +373,7 @@ otError PubackMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength
         return OT_ERROR_FAILED;
     }
     mReturnCode = static_cast<ReturnCode>(code);
-    mTopicId = static_cast<TopicId>(topicId);
+    mTopic = Topic::FromTopicId(topicId);
     return OT_ERROR_NONE;
 }
 
@@ -410,21 +434,25 @@ otError PubrelMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength
 otError SubscribeMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const
 {
     MQTTSN_topicid topicId;
+    int32_t len = 0;
     memset(&topicId, 0, sizeof(topicId));
-    switch (mTopicIdType)
+    switch (mTopic.GetType())
     {
     case kTopicName:
         topicId.type = MQTTSN_TOPIC_TYPE_NORMAL;
-        topicId.data.long_.name = const_cast<char*>(mTopicName.AsCString());
-        topicId.data.long_.len = mTopicName.GetLength();
+        len = strlen(mTopic.GetTopicName());
+        if (len > kMaxTopicNameLength) return OT_ERROR_INVALID_ARGS;
+        topicId.data.long_.name = const_cast<char*>(mTopic.GetTopicName());
+        topicId.data.long_.len = len;
         break;
     case kShortTopicName:
         topicId.type = MQTTSN_TOPIC_TYPE_SHORT;
-        memcpy(topicId.data.short_name, mShortTopicName.AsCString(), sizeof(topicId.data.short_name));
+        memcpy(topicId.data.short_name, mTopic.GetTopicName(), sizeof(topicId.data.short_name));
         break;
+    case kPredefinedTopicId:
     case kTopicId:
         topicId.type = MQTTSN_TOPIC_TYPE_PREDEFINED;
-        topicId.data.id = static_cast<unsigned short>(mTopicId);
+        topicId.data.id = static_cast<unsigned short>(mTopic.GetTopicId());
         break;
     default:
         return OT_ERROR_INVALID_STATE;
@@ -457,16 +485,15 @@ otError SubscribeMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLen
     switch (topicId.type)
     {
     case MQTTSN_TOPIC_TYPE_NORMAL:
-        mTopicIdType = kTopicName;
         SuccessOrExit(error = mTopicName.Set("%.*s", topicId.data.long_.len, topicId.data.long_.name));
+        mTopic = Topic::FromTopicName(mTopicName.AsCString());
         break;
     case MQTTSN_TOPIC_TYPE_SHORT:
-        mTopicIdType = kShortTopicName;
-        SuccessOrExit(error = mShortTopicName.Set("%.*s", 2, topicId.data.short_name));
+        SuccessOrExit(error = mTopicName.Set("%.*s", 2, topicId.data.short_name));
+        mTopic = Topic::FromShortTopicName(mTopicName.AsCString());
         break;
     case MQTTSN_TOPIC_TYPE_PREDEFINED:
-        mTopicIdType = kTopicId;
-        mTopicId = static_cast<TopicId>(topicId.data.id);
+        mTopic = Topic::FromTopicId(static_cast<TopicId>(topicId.data.id));
         break;
     default:
         error = OT_ERROR_INVALID_STATE;
@@ -507,21 +534,26 @@ otError SubackMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength
 otError UnsubscribeMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const
 {
     MQTTSN_topicid topicId;
+    int32_t len;
     memset(&topicId, 0, sizeof(topicId));
-    switch (mTopicIdType)
+    switch (mTopic.GetType())
     {
     case kTopicName:
         topicId.type = MQTTSN_TOPIC_TYPE_NORMAL;
-        topicId.data.long_.name = const_cast<char*>(mTopicName.AsCString());
-        topicId.data.long_.len = mTopicName.GetLength();
-        break;
-    case kTopicId:
-        topicId.type = MQTTSN_TOPIC_TYPE_PREDEFINED;
-        topicId.data.id = static_cast<unsigned short>(mTopicId);
+        len = strlen(mTopic.GetTopicName());
+        if (len > kMaxTopicNameLength) return OT_ERROR_INVALID_ARGS;
+        topicId.data.long_.name = const_cast<char*>(mTopic.GetTopicName());
+        topicId.data.long_.len = len;
         break;
     case kShortTopicName:
         topicId.type = MQTTSN_TOPIC_TYPE_SHORT;
-        memcpy(topicId.data.short_name, mShortTopicName.AsCString(), 2);
+        memcpy(topicId.data.short_name, mTopic.GetTopicName(),
+                sizeof(topicId.data.short_name));
+        break;
+    case kPredefinedTopicId:
+    case kTopicId:
+        topicId.type = MQTTSN_TOPIC_TYPE_PREDEFINED;
+        topicId.data.id = static_cast<unsigned short>(mTopic.GetTopicId());
         break;
     default:
         return OT_ERROR_INVALID_STATE;
@@ -549,13 +581,16 @@ otError UnsubscribeMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferL
 
     switch (topicId.type)
     {
-    case MQTTSN_TOPIC_TYPE_PREDEFINED:
-        mTopicIdType = kTopicId;
-        mTopicId = topicId.data.id;
+    case MQTTSN_TOPIC_TYPE_NORMAL:
+        SuccessOrExit(error = mTopicName.Set("%.*s", topicId.data.long_.len, topicId.data.long_.name));
+        mTopic = Topic::FromTopicName(mTopicName.AsCString());
         break;
     case MQTTSN_TOPIC_TYPE_SHORT:
-        mTopicIdType = kShortTopicName;
-        SuccessOrExit(error = mShortTopicName.Set("%.*s", 2, topicId.data.short_name));
+        SuccessOrExit(error = mTopicName.Set("%.*s", 2, topicId.data.short_name));
+        mTopic = Topic::FromShortTopicName(mTopicName.AsCString());
+        break;
+    case MQTTSN_TOPIC_TYPE_PREDEFINED:
+        mTopic = Topic::FromTopicId(static_cast<TopicId>(topicId.data.id));
         break;
     default:
         error = OT_ERROR_INVALID_STATE;
