@@ -1821,13 +1821,11 @@ void MqttsnClient::HandlePublishRetransmission(const Message &aMessage, const Ip
     uint16_t offset = aMessage.GetOffset();
     int32_t length = aMessage.GetLength() - aMessage.GetOffset();
 
-    unsigned char data[MAX_PACKET_SIZE];
-
-    if (length > MAX_PACKET_SIZE || !data)
+    if (length > MAX_PACKET_SIZE || !buffer)
     {
         return;
     }
-    aMessage.Read(offset, length, data);
+    aMessage.Read(offset, length, buffer);
     if (publishMessage.Deserialize(buffer, length) != OT_ERROR_NONE)
     {
         return;
