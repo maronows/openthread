@@ -815,7 +815,7 @@ void MqttsnClient::PubrecReceived(const Ip6::MessageInfo &messageInfo, const uns
     if (NewMessage(&responseMessage, buffer, packetLength) != OT_ERROR_NONE ||
         SendMessageWithRetransmission<otMqttsnPublishedHandler>(
                 *responseMessage, mPublishQos2PubrelQueue, metadata.mMessageId,
-                metadata.mCallback, this) != OT_ERROR_NONE)
+                metadata.mCallback, metadata.mContext) != OT_ERROR_NONE)
     {
         return;
     }
