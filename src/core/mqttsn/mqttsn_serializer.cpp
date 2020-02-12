@@ -390,9 +390,15 @@ otError PubcompMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32
 
 otError PubcompMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength)
 {
-	OT_UNUSED_VARIABLE(aBuffer);
-	OT_UNUSED_VARIABLE(aBufferLength);
-    return OT_ERROR_NOT_IMPLEMENTED;
+    unsigned char type;
+    unsigned short messageId;
+    if (MQTTSNDeserialize_ack(&type, &messageId, const_cast<unsigned char*>(aBuffer), aBufferLength) != 1
+        || type != MQTTSN_PUBCOMP)
+    {
+        return OT_ERROR_FAILED;
+    }
+    mMessageId = messageId;
+    return OT_ERROR_NONE;
 }
 
 otError PubrecMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const
@@ -408,9 +414,15 @@ otError PubrecMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_
 
 otError PubrecMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength)
 {
-    OT_UNUSED_VARIABLE(aBuffer);
-    OT_UNUSED_VARIABLE(aBufferLength);
-    return OT_ERROR_NOT_IMPLEMENTED;
+    unsigned char type;
+    unsigned short messageId;
+    if (MQTTSNDeserialize_ack(&type, &messageId, const_cast<unsigned char*>(aBuffer), aBufferLength) != 1
+        || type != MQTTSN_PUBREC)
+    {
+        return OT_ERROR_FAILED;
+    }
+    mMessageId = messageId;
+    return OT_ERROR_NONE;
 }
 
 otError PubrelMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const
@@ -426,9 +438,15 @@ otError PubrelMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_
 
 otError PubrelMessage::Deserialize(const uint8_t* aBuffer, int32_t aBufferLength)
 {
-	OT_UNUSED_VARIABLE(aBuffer);
-	OT_UNUSED_VARIABLE(aBufferLength);
-    return OT_ERROR_NOT_IMPLEMENTED;
+    unsigned char type;
+    unsigned short messageId;
+    if (MQTTSNDeserialize_ack(&type, &messageId, const_cast<unsigned char*>(aBuffer), aBufferLength) != 1
+        || type != MQTTSN_PUBREC)
+    {
+        return OT_ERROR_FAILED;
+    }
+    mMessageId = messageId;
+    return OT_ERROR_NONE;
 }
 
 otError SubscribeMessage::Serialize(uint8_t* aBuffer, uint8_t aBufferLength, int32_t* aLength) const
