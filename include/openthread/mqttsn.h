@@ -254,7 +254,7 @@ typedef void (*otMqttsnConnectedHandler)(otMqttsnReturnCode aCode, void *aContex
  * @param[in]  aContext  A pointer to subscription callback context object.
  *
  */
-typedef void (*otMqttsnSubscribedHandler)(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, otMqttsnQos aQos, void* aContext);
+typedef void (*otMqttsnSubscribedHandler)(otMqttsnReturnCode aCode, const otMqttsnTopic* aTopic, otMqttsnQos aQos, void* aContext);
 
 /**
  * Declaration of function for register callback.
@@ -264,7 +264,7 @@ typedef void (*otMqttsnSubscribedHandler)(otMqttsnReturnCode aCode, const otMqtt
  * @param[in]  aContext  A pointer to register callback context object.
  *
  */
-typedef void (*otMqttsnRegisteredHandler)(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, void* aContext);
+typedef void (*otMqttsnRegisteredHandler)(otMqttsnReturnCode aCode, const otMqttsnTopic* aTopic, void* aContext);
 
 /**
  * Declaration of function for publish callback. It is invoked only when quality of service level is 1 or 2.
@@ -295,7 +295,7 @@ typedef void (*otMqttsnUnsubscribedHandler)(otMqttsnReturnCode aCode, void* aCon
  *
  * @returns  Code to be send in response PUBACK message. Timeout value is not relevant.
  */
-typedef otMqttsnReturnCode (*otMqttsnPublishReceivedHandler)(const uint8_t* aPayload, int32_t aPayloadLength, const otMqttsnTopic *aTopic, void* aContext);
+typedef otMqttsnReturnCode (*otMqttsnPublishReceivedHandler)(const uint8_t* aPayload, int32_t aPayloadLength, const otMqttsnTopic* aTopic, void* aContext);
 
 /**
  * Declaration of function for disconnection callback.
@@ -484,7 +484,7 @@ otError otMqttsnReconnect(otInstance *aInstance);
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
-otError otMqttsnSubscribe(otInstance *aInstance, const otMqttsnTopic *aTopic, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext);
+otError otMqttsnSubscribe(otInstance *aInstance, const otMqttsnTopic* aTopic, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext);
 
 /**
  * Register to topic with long topic name and obtain related topic ID.
@@ -519,7 +519,7 @@ otError otMqttsnRegister(otInstance *aInstance, const char* aTopicName, otMqttsn
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
-otError otMqttsnPublish(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, bool aRetained, const otMqttsnTopic *aTopic, otMqttsnPublishedHandler aHandler, void* aContext);
+otError otMqttsnPublish(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, bool aRetained, const otMqttsnTopic* aTopic, otMqttsnPublishedHandler aHandler, void* aContext);
 
 /**
  * Publish message to the topic with QoS level -1. No connection or subscription is required.
@@ -551,7 +551,7 @@ otError otMqttsnPublishQosm1(otInstance *aInstance, const uint8_t* aData, int32_
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to unsubscribe.
  *
  */
-otError otMqttsnUnsubscribe(otInstance *aInstance, const otMqttsnTopic *aTopic, otMqttsnUnsubscribedHandler aHandler, void* aContext);
+otError otMqttsnUnsubscribe(otInstance *aInstance, const otMqttsnTopic* aTopic, otMqttsnUnsubscribedHandler aHandler, void* aContext);
 
 /**
  * Disconnect MQTT-SN client from gateway.
