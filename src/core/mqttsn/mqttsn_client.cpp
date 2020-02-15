@@ -1324,8 +1324,8 @@ otError MqttsnClient::Publish(const uint8_t* aData, int32_t aLength, Qos aQos, b
     unsigned char buffer[MAX_PACKET_SIZE];
     PublishMessage publishMessage(false, aRetained, aQos, messageId, aTopic, aData, aLength);
 
-    // Client state must be active
-    if (mClientState != kStateActive)
+    // Client state must be active or sleeping
+    if (mClientState != kStateActive && mClientState != kStateAsleep)
     {
         error = OT_ERROR_INVALID_STATE;
         goto exit;
