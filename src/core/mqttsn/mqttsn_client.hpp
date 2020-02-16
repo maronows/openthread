@@ -56,7 +56,8 @@ namespace Mqttsn {
  * @addtogroup core-mqttsn
  *
  * @brief
- *   This module includes definitions for MQTT-SN.
+ *   This module includes definitions for MQTT-SN client library. Client provides functionality
+ *   for MQTT-SN connection established and full messaging capabilities over UDP.
  *
  * @{
  *

@@ -42,6 +42,17 @@ extern "C" {
 #define OPENTHREAD_CONFIG_MQTTSN_ENABLE 0
 #endif
 
+/**
+ * @addtogroup api-mqttsn
+ *
+ * @brief
+ *  This module provides API for MQTT-SN client library. Client provides functionality
+ *  for MQTT-SN connection established and full messaging capabilities over UDP.
+ *
+ * @{
+ *
+ */
+
 enum
 {
     /**
@@ -750,6 +761,11 @@ otError otMqttsnClientStateToString(otMqttsnClientState aClientState, const char
  *
  */
 otError otMqttsnDisconnectTypeToString(otMqttsnDisconnectType aDisconnectType, const char** aDisconnectTypeString);
+
+/**
+ * @}
+ *
+ */
 
 #ifdef __cplusplus
 } // extern "C"
