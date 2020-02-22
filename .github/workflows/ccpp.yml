@@ -1,0 +1,19 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    - name: script bootstrap
+      run: ./script/bootstrap
+    - name: bootstrap
+      run: ./bootstrap
+    - name: configure
+      run: ./configure --enable-posix-app --enable-ftd --enable-mtd --enable-cli --enable-ncp
+    - name: make
+      run: make MQTT=1 JOINER=1
