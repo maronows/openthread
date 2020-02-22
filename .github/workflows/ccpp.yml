@@ -9,11 +9,17 @@ jobs:
     
     steps:
     - uses: actions/checkout@v2
+    - name: checkout submodules
+      shell: bash
+      run: |
+        auth_header="$(git config --local --get http.https://github.com/.extraheader)"
+        git submodule sync --recursive
+        git -c "http.extraheader=$auth_header" -c protocol.version=2 submodule update --init --force --recursive --depth=1
     - name: script bootstrap
       run: ./script/bootstrap
     - name: bootstrap
       run: ./bootstrap
     - name: configure
-      run: ./configure --enable-posix-app --enable-ftd --enable-mtd --enable-cli --enable-ncp
+      run: ./configure --enable-ftd --enable-mtd --with-examples=posix --disable-docs --enable-tests
     - name: make
-      run: make MQTT=1 JOINER=1
+      run: make MQTT=1
