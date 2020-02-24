@@ -79,6 +79,7 @@ private:
     otError ProcessState(int argc, char *argv[]);
     otError ProcessRegister(int argc, char *argv[]);
     otError ProcessPublish(int argc, char *argv[]);
+    otError ProcessPublishm1(int argc, char *argv[]);
     otError ProcessUnsubscribe(int argc, char *argv[]);
     otError ProcessDisconnect(int argc, char *argv[]);
     otError ProcessSleep(int argc, char *argv[]);
@@ -86,18 +87,20 @@ private:
     otError ProcessSearchgw(int argc, char *argv[]);
     otError ProcessGateways(int argc, char *argv[]);
 
+    otError ParseTopic(char *aValue, otMqttsnTopic *aTopic);
+
     static void HandleConnected(otMqttsnReturnCode aCode, void *aContext);
     void        HandleConnected(otMqttsnReturnCode aCode);
-    static void HandleSubscribed(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, otMqttsnQos aQos, void* aContext);
-    void        HandleSubscribed(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, otMqttsnQos aQos);
-    static void HandleRegistered(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, void* aContext);
-    void        HandleRegistered(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId);
+    static void HandleSubscribed(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, otMqttsnQos aQos, void* aContext);
+    void        HandleSubscribed(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, otMqttsnQos aQos);
+    static void HandleRegistered(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, void* aContext);
+    void        HandleRegistered(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic);
     static void HandlePublished(otMqttsnReturnCode aCode, void* aContext);
     void        HandlePublished(otMqttsnReturnCode aCode);
     static void HandleUnsubscribed(otMqttsnReturnCode aCode, void* aContext);
     void        HandleUnsubscribed(otMqttsnReturnCode aCode);
-    static otMqttsnReturnCode HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, otMqttsnTopicIdType aTopicIdType, otMqttsnTopicId aTopicId, const char* aShortTopicName, void* aContext);
-    otMqttsnReturnCode        HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, otMqttsnTopicIdType aTopicIdType, otMqttsnTopicId aTopicId, const char* aShortTopicName);
+    static otMqttsnReturnCode HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, const otMqttsnTopic *aTopicId, void* aContext);
+    otMqttsnReturnCode        HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, const otMqttsnTopic *aTopicId);
     static void HandleDisconnected(otMqttsnDisconnectType aType, void* aContext);
     void        HandleDisconnected(otMqttsnDisconnectType aType);
     static void HandleSearchgwResponse(const otIp6Address* aAddress, uint8_t aGatewayId, void* aContext);

@@ -42,10 +42,10 @@ const struct Mqtt::Command Mqtt::sCommands[] = {
     {"stop", &Mqtt::ProcessStop},               {"connect", &Mqtt::ProcessConnect},
     {"reconnect", &Mqtt::ProcessReconnect},     {"subscribe", &Mqtt::ProcessSubscribe},
     {"state", &Mqtt::ProcessState},             {"register", &Mqtt::ProcessRegister},
-    {"publish", &Mqtt::ProcessPublish},         {"unsubscribe", &Mqtt::ProcessUnsubscribe},
-    {"disconnect", &Mqtt::ProcessDisconnect},   {"sleep", &Mqtt::ProcessSleep},
-    {"awake", &Mqtt::ProcessAwake},             {"searchgw", &Mqtt::ProcessSearchgw},
-    {"gateways", &Mqtt::ProcessGateways}
+    {"publish", &Mqtt::ProcessPublish},         {"publishm1", &Mqtt::ProcessPublishm1},
+    {"unsubscribe", &Mqtt::ProcessUnsubscribe}, {"disconnect", &Mqtt::ProcessDisconnect},
+    {"sleep", &Mqtt::ProcessSleep},             {"awake", &Mqtt::ProcessAwake},
+    {"searchgw", &Mqtt::ProcessSearchgw},       {"gateways", &Mqtt::ProcessGateways}
 };
 
 Mqtt::Mqtt(Interpreter &aInterpreter)
@@ -155,18 +155,18 @@ otError Mqtt::ProcessReconnect(int argc, char *argv[])
 otError Mqtt::ProcessSubscribe(int argc, char *argv[])
 {
     otError error;
-    char *topicName;
     otMqttsnQos qos = kQos1;
+    otMqttsnTopic topic;
     if (argc < 2 || argc > 3)
     {
         ExitNow(error = OT_ERROR_INVALID_ARGS);
     }
-    topicName = argv[1];
+    SuccessOrExit(error = ParseTopic(argv[1], &topic));
     if (argc > 2)
     {
         SuccessOrExit(error = otMqttsnStringToQos(argv[2], &qos));
     }
-    SuccessOrExit(error = otMqttsnSubscribe(mInterpreter.mInstance, topicName, qos, &HandleSubscribed, this));
+    SuccessOrExit(error = otMqttsnSubscribe(mInterpreter.mInstance, &topic, qos, &Mqtt::HandleSubscribed, this));
 exit:
     return error;
 }
@@ -200,30 +200,84 @@ exit:
     return error;
 }
 
+otError Mqtt::ParseTopic(char *aValue, otMqttsnTopic *aTopic)
+{
+    otError error = OT_ERROR_NONE;
+    long topicId = 0;
+
+    // Parse topic
+    // If string starts with '@' it will be considered as normal topic ID
+    // If string starts with '$' it will be considered as predefined topic ID
+    // Otherwise it is short topic name
+    if (aValue[0] == '@')
+    {
+        SuccessOrExit(error = mInterpreter.ParseLong(&aValue[1], topicId));
+        *aTopic = otMqttsnCreateTopicId((otMqttsnTopicId)topicId);
+    }
+    else if (aValue[0] == '$')
+    {
+        SuccessOrExit(error = mInterpreter.ParseLong(&aValue[1], topicId));
+        *aTopic = otMqttsnCreatePredefinedTopicId((otMqttsnTopicId)topicId);
+    }
+    else
+    {
+        *aTopic = otMqttsnCreateTopicName(aValue);
+    }
+
+exit:
+    return error;
+}
+
 otError Mqtt::ProcessPublish(int argc, char *argv[])
 {
     otError error;
-    long topicId;
     otMqttsnQos qos = kQos1;
     const char* data = "";
     int32_t length = 0;
+    otMqttsnTopic topic;
 
-    if (argc < 2 || argc > 4)
+    if (argc < 3 || argc > 4)
     {
         ExitNow(error = OT_ERROR_INVALID_ARGS);
     }
-    SuccessOrExit(error = mInterpreter.ParseLong(argv[1], topicId));
-    if (argc > 2)
-    {
-        data = argv[2];
-        length = strlen(argv[2]);
-    }
+    SuccessOrExit(error = ParseTopic(argv[1], &topic));
+    SuccessOrExit(error = otMqttsnStringToQos(argv[2], &qos));
     if (argc > 3)
     {
-        SuccessOrExit(error = otMqttsnStringToQos(argv[3], &qos));
+        data = argv[3];
+        length = strlen(argv[3]);
     }
     SuccessOrExit(error = otMqttsnPublish(mInterpreter.mInstance, (uint8_t *)data,
-        length, qos, (otMqttsnTopicId)topicId, &Mqtt::HandlePublished, this));
+        length, qos, false, &topic, &Mqtt::HandlePublished, this));
+exit:
+    return error;
+}
+
+otError Mqtt::ProcessPublishm1(int argc, char *argv[])
+{
+    otError error;
+    otIp6Address destinationIp;
+    long destinationPort;
+    const char* data = "";
+    int32_t length = 0;
+    otMqttsnTopic topic;
+
+    if (argc < 5)
+    {
+        ExitNow(error = OT_ERROR_INVALID_ARGS);
+    }
+
+    SuccessOrExit(error = otIp6AddressFromString(argv[1], &destinationIp));
+    SuccessOrExit(error = mInterpreter.ParseLong(argv[2], destinationPort));
+    SuccessOrExit(error = ParseTopic(argv[3], &topic));
+    if (argc > 4)
+    {
+        data = argv[4];
+        length = strlen(argv[4]);
+    }
+
+    SuccessOrExit(error = otMqttsnPublishQosm1(mInterpreter.mInstance, (uint8_t *)data,
+        length, false, &topic, &destinationIp, destinationPort));
 exit:
     return error;
 }
@@ -231,14 +285,15 @@ exit:
 otError Mqtt::ProcessUnsubscribe(int argc, char *argv[])
 {
     otError error;
-    char *topicName;
+    otMqttsnTopic topic;
 
     if (argc != 2)
     {
         ExitNow(error = OT_ERROR_INVALID_ARGS);
     }
-    topicName = argv[1];
-    SuccessOrExit(error = otMqttsnUnsubscribe(mInterpreter.mInstance, topicName, &Mqtt::HandleUnsubscribed, this));
+
+    SuccessOrExit(error = ParseTopic(argv[1], &topic));
+    SuccessOrExit(error = otMqttsnUnsubscribe(mInterpreter.mInstance, &topic, &Mqtt::HandleUnsubscribed, this));
 exit:
     return error;
 }
@@ -336,17 +391,21 @@ void Mqtt::HandleConnected(otMqttsnReturnCode aCode)
 	}
 }
 
-void Mqtt::HandleSubscribed(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, otMqttsnQos aQos, void* aContext)
+void Mqtt::HandleSubscribed(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, otMqttsnQos aQos, void* aContext)
 {
-    static_cast<Mqtt *>(aContext)->HandleSubscribed(aCode, aTopicId, aQos);
+    static_cast<Mqtt *>(aContext)->HandleSubscribed(aCode, aTopic, aQos);
 }
 
-void Mqtt::HandleSubscribed(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, otMqttsnQos aQos)
+void Mqtt::HandleSubscribed(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, otMqttsnQos aQos)
 {
     OT_UNUSED_VARIABLE(aQos);
     if (aCode == kCodeAccepted)
     {
-        mInterpreter.mServer->OutputFormat("subscribed topic id:%u\r\n", (unsigned int)aTopicId);
+        mInterpreter.mServer->OutputFormat("subscribed topic id:");
+        if (aTopic != NULL)
+        {
+            mInterpreter.mServer->OutputFormat("%u\r\n", otMqttsnGetTopicId(aTopic));
+        }
     }
     else
     {
@@ -354,16 +413,16 @@ void Mqtt::HandleSubscribed(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, 
     }
 }
 
-void Mqtt::HandleRegistered(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, void* aContext)
+void Mqtt::HandleRegistered(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic, void* aContext)
 {
-    static_cast<Mqtt *>(aContext)->HandleRegistered(aCode, aTopicId);
+    static_cast<Mqtt *>(aContext)->HandleRegistered(aCode, aTopic);
 }
 
-void Mqtt::HandleRegistered(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId)
+void Mqtt::HandleRegistered(otMqttsnReturnCode aCode, const otMqttsnTopic *aTopic)
 {
     if (aCode == kCodeAccepted)
     {
-        mInterpreter.mServer->OutputFormat("registered topic id:%u\r\n", (unsigned int)aTopicId);
+        mInterpreter.mServer->OutputFormat("registered topic id:%u\r\n", otMqttsnGetTopicId(aTopic));
     }
     else
     {
@@ -405,20 +464,20 @@ void Mqtt::HandleUnsubscribed(otMqttsnReturnCode aCode)
     }
 }
 
-otMqttsnReturnCode Mqtt::HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, otMqttsnTopicIdType aTopicIdType, otMqttsnTopicId aTopicId, const char* aShortTopicName, void* aContext)
+otMqttsnReturnCode Mqtt::HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, const otMqttsnTopic *aTopic, void* aContext)
 {
-    return static_cast<Mqtt *>(aContext)->HandlePublishReceived(aPayload, aPayloadLength, aTopicIdType, aTopicId, aShortTopicName);
+    return static_cast<Mqtt *>(aContext)->HandlePublishReceived(aPayload, aPayloadLength, aTopic);
 }
 
-otMqttsnReturnCode Mqtt::HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, otMqttsnTopicIdType aTopicIdType, otMqttsnTopicId aTopicId, const char* aShortTopicName)
+otMqttsnReturnCode Mqtt::HandlePublishReceived(const uint8_t* aPayload, int32_t aPayloadLength, const otMqttsnTopic *aTopic)
 {
-    if (aTopicIdType == kTopicId)
+    if (aTopic->mType == kTopicId)
     {
-        mInterpreter.mServer->OutputFormat("received publish from topic id %u:\r\n", (unsigned int)aTopicId);
+        mInterpreter.mServer->OutputFormat("received publish from topic id %u:\r\n", otMqttsnGetTopicId(aTopic));
     }
-    else if (aTopicIdType == kShortTopicName)
+    else if (aTopic->mType == kShortTopicName)
     {
-        mInterpreter.mServer->OutputFormat("received publish from topic %s:\r\n", aShortTopicName);
+        mInterpreter.mServer->OutputFormat("received publish from topic %s:\r\n", otMqttsnGetTopicName(aTopic));
     }
     mInterpreter.mServer->OutputFormat("%.*s\r\n", aPayloadLength, aPayload);
     return kCodeAccepted;

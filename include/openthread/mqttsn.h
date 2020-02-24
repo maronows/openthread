@@ -42,6 +42,17 @@ extern "C" {
 #define OPENTHREAD_CONFIG_MQTTSN_ENABLE 0
 #endif
 
+/**
+ * @addtogroup api-mqttsn
+ *
+ * @brief
+ *  This module provides API for MQTT-SN client library. Client provides functionality
+ *  for MQTT-SN connection established and full messaging capabilities over UDP.
+ *
+ * @{
+ *
+ */
+
 enum
 {
     /**
@@ -114,11 +125,6 @@ typedef enum
 typedef enum
 {
     /**
-     * Predefined topic ID.
-     *
-     */
-    kTopicId,
-    /**
      * Two character short topic name.
      *
      */
@@ -127,8 +133,41 @@ typedef enum
      * Long topic name.
      *
      */
-    kTopicName
+    kTopicName,
+    /**
+     * Registered topic ID.
+     *
+     */
+    kTopicId,
+    /**
+     * Predefined topic ID.
+     *
+     */
+    kPredefinedTopicId
 } otMqttsnTopicIdType;
+
+/**
+ * Numeric topic ID.
+ *
+ */
+typedef uint16_t otMqttsnTopicId;
+
+/**
+ * Topic ID structure.
+ *
+ * @note This structure aggregates all possible topic id types.
+ *
+ */
+typedef struct otMqttsnTopic
+{
+    otMqttsnTopicIdType mType;
+    union
+    {
+        const char *mTopicName;
+        char mShortTopicName[3];
+        otMqttsnTopicId mTopicId;
+    } mData;
+} otMqttsnTopic;
 
 /**
  * Disconnected state reason.
@@ -153,12 +192,6 @@ typedef enum
      */
     kDisconnectTimeout
 } otMqttsnDisconnectType;
-
-/**
- * Topic ID type.
- *
- */
-typedef uint16_t otMqttsnTopicId;
 
 /**
  * This structure contains MQTT-SN connection parameters.
@@ -227,22 +260,22 @@ typedef void (*otMqttsnConnectedHandler)(otMqttsnReturnCode aCode, void *aContex
  * Declaration of function for subscribe callback.
  *
  * @param[in]  aCode     SUBACK return code or -1 when subscription timed out.
- * @param[in]  aTopicId  Subscribed topic ID. The value is 0 when timed out or subscribed by short topic name.
+ * @param[in]  aTopic    Subscribed topic. The value is NULL when timed out or short topic name was subscribed.
  * @param[in]  aQos      Subscribed quality of service level.
  * @param[in]  aContext  A pointer to subscription callback context object.
  *
  */
-typedef void (*otMqttsnSubscribedHandler)(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, otMqttsnQos aQos, void* aContext);
+typedef void (*otMqttsnSubscribedHandler)(otMqttsnReturnCode aCode, const otMqttsnTopic* aTopic, otMqttsnQos aQos, void* aContext);
 
 /**
  * Declaration of function for register callback.
  *
  * @param[in]  aCode     REGACK return code or -1 when subscription timed out.
- * @param[in]  aTopicId  Registered topic ID.
+ * @param[in]  aTopic    Registered topic. Only topic ID type can be registered.
  * @param[in]  aContext  A pointer to register callback context object.
  *
  */
-typedef void (*otMqttsnRegisteredHandler)(otMqttsnReturnCode aCode, otMqttsnTopicId aTopicId, void* aContext);
+typedef void (*otMqttsnRegisteredHandler)(otMqttsnReturnCode aCode, const otMqttsnTopic* aTopic, void* aContext);
 
 /**
  * Declaration of function for publish callback. It is invoked only when quality of service level is 1 or 2.
@@ -268,14 +301,12 @@ typedef void (*otMqttsnUnsubscribedHandler)(otMqttsnReturnCode aCode, void* aCon
  *
  * @param[in]  aPayload         A pointer to PUBLISH message payload byte array.
  * @param[in]  aPayloadLength   PUBLISH message payload length.
- * @param[in]  aTopicIdType     Topic ID type. Possible values are kTopicId or kShortTopicName.
- * @param[in]  aTopicId         PUBLISH message topic ID. It is set only when aTopicIdType is kTopicId.
- * @param[in]  aShortTopicName  PUBLISH message short topic name. It is set only when aTopicIdType is kShortTopicName.
+ * @param[in]  aTopic           Published topic. Can be only short topic name, topic ID and predefined topic ID.
  * @param[in]  aContext         A pointer to publish received callback context object.
  *
  * @returns  Code to be send in response PUBACK message. Timeout value is not relevant.
  */
-typedef otMqttsnReturnCode (*otMqttsnPublishReceivedHandler)(const uint8_t* aPayload, int32_t aPayloadLength, otMqttsnTopicIdType aTopicIdType, otMqttsnTopicId aTopicId, const char* aShortTopicName, void* aContext);
+typedef otMqttsnReturnCode (*otMqttsnPublishReceivedHandler)(const uint8_t* aPayload, int32_t aPayloadLength, const otMqttsnTopic* aTopic, void* aContext);
 
 /**
  * Declaration of function for disconnection callback.
@@ -318,6 +349,62 @@ typedef void (*otMqttsnAdvertiseHandler)(const otIp6Address* aAddress, uint8_t a
  *
  */
 typedef otMqttsnReturnCode (*otMqttsnRegisterReceivedHandler)(otMqttsnTopicId aTopicId, const char *aTopicName, void* aContext);
+
+/**
+ * Create and initialize topic structure with topic name string. If is of length 1 or 2 then short topic name is sent.
+ *
+ * @note It can be used only for MQTT-SN subscribe or unsubscribe.
+ *
+ * @param[in]  aTopicName        A pointer full topic name string.
+ *
+ * @return Topic of type kTopicName initialized with topic name string.
+ *
+ */
+otMqttsnTopic otMqttsnCreateTopicName(const char *aTopicName);
+
+/**
+ * Create and initialize topic structure with numeric topic ID.
+ *
+ * @note It should be used only for MQTT-SN publish.
+ *
+ * @param[in]  aTopicId          Numeric topic ID. Must not be 0.
+ *
+ * @return Topic of type kTopicId initialized with numeric topic ID.
+ *
+ */
+otMqttsnTopic otMqttsnCreateTopicId(otMqttsnTopicId aTopicId);
+
+/**
+ * Create and initialize topic structure with predefined topic ID.
+ *
+ * @note It can be used only for MQTT-SN subscribe, unsubscribe and publish.
+ *
+ * @param[in]  aTopicId          Numeric topic ID. Must not be 0.
+ *
+ * @return Topic of type kTopicId initialized with numeric topic ID.
+ *
+ */
+otMqttsnTopic otMqttsnCreatePredefinedTopicId(otMqttsnTopicId aTopicId);
+
+/**
+ * Get MQTT-SN topic name from topic structure. Topic must be of type kTopicName or kShortTopicName.
+ *
+ * @param[in]  aTopic            A pointer to topic.
+ *
+ * @return A pointer to full or short topic name string.
+ *
+ */
+const char *otMqttsnGetTopicName(const otMqttsnTopic *aTopic);
+
+/**
+ * Get MQTT-SN numeric topic ID from topic structure. Topic must be of type kTopicId.
+ *
+ * @param[in]  aTopic            A pointer to topic.
+ *
+ * @return Numeric MQTT-SN topic ID.
+ *
+ */
+otMqttsnTopicId otMqttsnGetTopicId(const otMqttsnTopic *aTopic);
 
 /**
  * Start MQTT-SN service and start connection and listening.
@@ -394,10 +481,10 @@ otError otMqttsnConnectDefault(otInstance *aInstance, const otIp6Address* aAddre
 otError otMqttsnReconnect(otInstance *aInstance);
 
 /**
- * Subscribe to the topic by topic name string.
+ * Subscribe to the topic.
  *
  * @param[in]  aInstance          A pointer to an OpenThread instance.
- * @param[in]  aTopicName         A pointer to long topic name string.
+ * @param[in]  aTopic             A pointer to the topic to be subscribed. Topic name, short topic name and topic ID are supported.
  * @param[in]  aQos               Quality of service level to be subscribed.
  * @param[in]  aHandler           A function pointer to handler which is invoked when subscription is acknowledged.
  * @param[in]  aContext           A pointer to context object passed to handler.
@@ -408,41 +495,7 @@ otError otMqttsnReconnect(otInstance *aInstance);
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
-otError otMqttsnSubscribe(otInstance *aInstance, const char *aTopicName, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext);
-
-/**
- * Subscribe to the topic by short topic name string.
- *
- * @param[in]  aInstance          A pointer to an OpenThread instance.
- * @param[in]  aShortTopicName    A pointer to short topic name string. Must be 1 or 2 characters long.
- * @param[in]  aQos               Quality of service level to be subscribed.
- * @param[in]  aHandler           A function pointer to handler which is invoked when subscription is acknowledged.
- * @param[in]  aContext           A pointer to context object passed to handler.
- *
- * @retval OT_ERROR_NONE           Subscription message successfully queued.
- * @retval OT_ERROR_INVALID_ARGS   Invalid subscription parameters.
- * @retval OT_ERROR_INVALID_STATE  The client cannot connect in active state.
- * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
- *
- */
-otError otMqttsnSubscribeShort(otInstance *aInstance, const char *aShortTopicName, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext);
-
-/**
- * Subscribe to the topic by predefined topic id.
- *
- * @param[in]  aInstance          A pointer to an OpenThread instance.
- * @param[in]  aTopicId           Predefined topic ID to subscribe to.
- * @param[in]  aQos               Quality of service level to be subscribed.
- * @param[in]  aHandler           A function pointer to handler which is invoked when subscription is acknowledged.
- * @param[in]  aContext           A pointer to context object passed to handler.
- *
- * @retval OT_ERROR_NONE           Subscription message successfully queued.
- * @retval OT_ERROR_INVALID_ARGS   Invalid subscription parameters.
- * @retval OT_ERROR_INVALID_STATE  The client cannot connect in active state.
- * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
- *
- */
-otError otMqttsnSubscribeTopicId(otInstance *aInstance, otMqttsnTopicId aTopicId, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext);
+otError otMqttsnSubscribe(otInstance *aInstance, const otMqttsnTopic* aTopic, otMqttsnQos aQos, otMqttsnSubscribedHandler aHandler, void *aContext);
 
 /**
  * Register to topic with long topic name and obtain related topic ID.
@@ -460,33 +513,16 @@ otError otMqttsnSubscribeTopicId(otInstance *aInstance, otMqttsnTopicId aTopicId
 otError otMqttsnRegister(otInstance *aInstance, const char* aTopicName, otMqttsnRegisteredHandler aHandler, void* aContext);
 
 /**
- * Publish message to the topic with specific topic ID.
+ * Publish message to the topic.
  *
  * @param[in]  aInstance  A pointer to an OpenThread instance.
  * @param[in]  aData      A pointer to byte array to be send as message payload.
  * @param[in]  aLength    Length of message payload data.
  * @param[in]  aQos       Message quality of service level.
- * @param[in]  aTopicId   Topic ID of target topic.
+ * @param[in]  aRetained  Set retained flag of MQTT-SN publish message.
+ * @param[in]  aTopic     A pointer to the topic to publish to. Only short topic name, topic ID and predefined topic ID are allowed.
  * @param[in]  aHandler   A function pointer to callback invoked when publish is acknowledged.
  * @param[in]  aContext   A pointer to context object passed to callback.
- *
- * @retval OT_ERROR_NONE           Publish message successfully queued.
- * @retval OT_ERROR_INVALID_STATE  The client is not in active state.
- * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
- *
- */
-otError otMqttsnPublish(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, otMqttsnTopicId aTopicId, otMqttsnPublishedHandler aHandler, void* aContext);
-
-/**
- * Publish message to the topic with specific short topic name.
- *
- * @param[in]  aInstance        A pointer to an OpenThread instance.
- * @param[in]  aData            A pointer to byte array to be send as message payload.
- * @param[in]  aLength          Length of message payload data.
- * @param[in]  aQos             Message quality of service level.
- * @param[in]  aShortTopicName  A pointer to short topic name string of target topic.
- * @param[in]  aHandler         A function pointer to callback invoked when publish is acknowledged.
- * @param[in]  aContext         A pointer to context object passed to callback.
  *
  * @retval OT_ERROR_NONE           Publish message successfully queued.
  * @retval OT_ERROR_INVALID_ARGS   Invalid publish parameters. Short topic name must have one or two characters.
@@ -494,15 +530,16 @@ otError otMqttsnPublish(otInstance *aInstance, const uint8_t* aData, int32_t aLe
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
-otError otMqttsnPublishShort(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, const char* aShortTopicName, otMqttsnPublishedHandler aHandler, void* aContext);
+otError otMqttsnPublish(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnQos aQos, bool aRetained, const otMqttsnTopic* aTopic, otMqttsnPublishedHandler aHandler, void* aContext);
 
 /**
- * Publish message to the topic with specific topic ID with QoS level -1. No connection or subscription is required.
+ * Publish message to the topic with QoS level -1. No connection or subscription is required.
  *
  * @param[in]  aInstance  A pointer to an OpenThread instance.
  * @param[in]  aData      A pointer to byte array to be send as message payload.
  * @param[in]  aLength    Length of message payload data.
- * @param[in]  aTopicId   Topic ID of target topic.
+ * @param[in]  aRetained  Set retained flag of MQTT-SN publish message.
+ * @param[in]  aTopic     A pointer to the topic to publish to. Only short topic name and predefined topic ID are allowed.
  * @param[in]  aAddress   Gateway address.
  * @param[in]  aPort      Gateway port.
  *
@@ -510,30 +547,13 @@ otError otMqttsnPublishShort(otInstance *aInstance, const uint8_t* aData, int32_
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
  *
  */
-otError otMqttsnPublishQosm1(otInstance *aInstance, const uint8_t* aData, int32_t aLength, otMqttsnTopicId aTopicId, const otIp6Address* aAddress, uint16_t aPort);
-
-/**
- * Publish message to the topic with specific short topic name with QoS level -1. No connection or subscription is required.
- *
- * @param[in]  aInstance        A pointer to an OpenThread instance.
- * @param[in]  aData            A pointer to byte array to be send as message payload.
- * @param[in]  aLength          Length of message payload data.
- * @param[in]  aShortTopicName  A pointer to short topic name string of target topic.
- * @param[in]  aAddress         Gateway address.
- * @param[in]  aPort            Gateway port.
- *
- * @retval OT_ERROR_NONE           Publish message successfully queued.
- * @retval OT_ERROR_INVALID_ARGS   Invalid publish parameters. Short topic name must have one or two characters.
- * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
- *
- */
-otError otMqttsnPublishQosm1Short(otInstance *aInstance, const uint8_t* aData, int32_t aLength, const char* aShortTopicName, const otIp6Address* aAddress, uint16_t aPort);
+otError otMqttsnPublishQosm1(otInstance *aInstance, const uint8_t* aData, int32_t aLength, bool aRetained, const otMqttsnTopic *aTopic, const otIp6Address* aAddress, uint16_t aPort);
 
 /**
  * Unsubscribe from the topic by topic name string.
  *
  * @param[in]  aInstance  A pointer to an OpenThread instance.
- * @param[in]  aTopicName A pointer to long topic name string.
+ * @param[in]  aTopic     A pointer to the topic to be unsubscribed. Long topic name, short topic name and topic ID are supported.
  * @param[in]  aHandler   A function pointer to callback invoked when unsubscription is acknowledged.
  * @param[in]  aContext   A pointer to context object passed to callback.
  *
@@ -542,38 +562,7 @@ otError otMqttsnPublishQosm1Short(otInstance *aInstance, const uint8_t* aData, i
  * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to unsubscribe.
  *
  */
-otError otMqttsnUnsubscribe(otInstance *aInstance, const char *aTopicName, otMqttsnUnsubscribedHandler aHandler, void* aContext);
-
-/**
- * Unsubscribe from the topic with specific topic ID.
- *
- * @param[in]  aInstance  A pointer to an OpenThread instance.
- * @param[in]  aTopicId   A pointer to short topic name string of target topic.
- * @param[in]  aHandler   A function pointer to callback invoked when unsubscription is acknowledged.
- * @param[in]  aContext   A pointer to context object passed to callback.
- *
- * @retval OT_ERROR_NONE           Unsubscribe message successfully queued.
- * @retval OT_ERROR_INVALID_STATE  The client is not in active state.
- * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to unsubscribe.
- *
- */
-otError otMqttsnUnsubscribeTopicId(otInstance *aInstance, otMqttsnTopicId aTopicId, otMqttsnUnsubscribedHandler aHandler, void* aContext);
-
-/**
- * Unsubscribe from the topic with specific short topic name.
- *
- * @param[in]  aInstance        A pointer to an OpenThread instance.
- * @param[in]  aShortTopicName  A pointer to short topic name string of target topic.
- * @param[in]  aHandler         A function pointer to callback invoked when unsubscription is acknowledged.
- * @param[in]  aContext         A pointer to context object passed to callback.
- *
- * @retval OT_ERROR_NONE           Unsubscribe message successfully queued.
- * @retval OT_ERROR_INVALID_ARGS   Invalid unsubscribe parameters. Short topic name must have one or two characters.
- * @retval OT_ERROR_INVALID_STATE  The client is not in active state.
- * @retval OT_ERROR_NO_BUFS        Insufficient available buffers to process.
- *
- */
-otError otMqttsnUnsubscribeShort(otInstance *aInstance, const char* aShortTopicName, otMqttsnUnsubscribedHandler aHandler, void* aContext);
+otError otMqttsnUnsubscribe(otInstance *aInstance, const otMqttsnTopic* aTopic, otMqttsnUnsubscribedHandler aHandler, void* aContext);
 
 /**
  * Disconnect MQTT-SN client from gateway.
@@ -772,6 +761,11 @@ otError otMqttsnClientStateToString(otMqttsnClientState aClientState, const char
  *
  */
 otError otMqttsnDisconnectTypeToString(otMqttsnDisconnectType aDisconnectType, const char** aDisconnectTypeString);
+
+/**
+ * @}
+ *
+ */
 
 #ifdef __cplusplus
 } // extern "C"
